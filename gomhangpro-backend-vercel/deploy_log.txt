@@ -1,0 +1,39 @@
+Retrieving projectΓÇª
+Your Project was either deleted, transferred to a new Team, or you donΓÇÖt have access to it anymore.
+Loading scopesΓÇª
+Searching for existing projectsΓÇª
+Linked to vuanhtuanofc-7250s-projects/backend (created .vercel)
+Deploying vuanhtuanofc-7250s-projects/backend
+Uploading [--------------------] (0.0B/4.5KB)
+Uploading [==================--] (4.2KB/4.5KB)
+Uploading [====================] (4.5KB/4.5KB)
+Inspect: https://vercel.com/vuanhtuanofc-7250s-projects/backend/ENsUwx7sdfx38XAqCg76xoT9DS1i [3s]
+Production: https://backend-bjnpnbmq0-vuanhtuanofc-7250s-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Washington, D.C., USA (East) ΓÇô iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Previous build caches not available.
+Building: Downloading 158 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.28.0
+Building: WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+Building: Installing dependencies...
+Building: added 129 packages in 3s
+Building: 18 packages are looking for funding
+Building: run `npm fund` for details
+Building: Running "npm run vercel-build"
+Building: > gom-hang-pro-backend@1.0.0 vercel-build
+Building: > npm run build
+Building: > gom-hang-pro-backend@1.0.0 build
+Building: > npx tsc -p tsconfig.json
+Building: Build Completed in /vercel/output [7s]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https://backend-bjnpnbmq0-vuanhtuanofc-7250s-projects.vercel.app [24s]
+Completing...
+Aliased: https://backend-lemon-eight-23.vercel.app [24s]
+Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+https://backend-bjnpnbmq0-vuanhtuanofc-7250s-projects.vercel.app

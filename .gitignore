@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.expo/
+*.env*
+!.env.example
+out/
+.DS_Store
+.vscode/
+.idea/

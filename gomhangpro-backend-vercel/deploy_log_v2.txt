@@ -1,0 +1,32 @@
+Retrieving projectΓÇª
+Deploying vuanhtuanofc-7250s-projects/gomhangpro-backend
+Uploading [--------------------] (0.0B/2.2KB)
+Uploading [====================] (2.2KB/2.2KB)
+Inspect: https://vercel.com/vuanhtuanofc-7250s-projects/gomhangpro-backend/7PnjDJQ2vk4NQAFjNmAcDeBkeCtf [2s]
+Production: https://gomhangpro-backend-fia6xc55n-vuanhtuanofc-7250s-projects.vercel.app [2s]
+Building...
+Building...
+Building: Running build in Washington, D.C., USA (East) ΓÇô iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 159 deployment files...
+Building: Restored build cache from previous deployment (7ZknjdqzrqwZ2swNEUgqJuuyfRbV)
+Building: Running "vercel build"
+Building: Vercel CLI 50.28.0
+Building: WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+Building: Installing dependencies...
+Building: up to date in 641ms
+Building: 18 packages are looking for funding
+Building: run `npm fund` for details
+Building: Running "npm run vercel-build"
+Building: > gom-hang-pro-backend@1.0.0 vercel-build
+Building: > npm run build
+Building: > gom-hang-pro-backend@1.0.0 build
+Building: > npx tsc -p tsconfig.json
+Building: Build Completed in /vercel/output [5s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://gomhangpro-backend-fia6xc55n-vuanhtuanofc-7250s-projects.vercel.app [18s]
+Completing...
+Aliased: https://gomhangprobackend.vercel.app [18s]
+Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+https://gomhangpro-backend-fia6xc55n-vuanhtuanofc-7250s-projects.vercel.app

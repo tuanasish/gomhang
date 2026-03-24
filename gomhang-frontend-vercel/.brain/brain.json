@@ -1,0 +1,123 @@
+{
+    "meta": {
+        "schema_version": "1.1.0",
+        "awf_version": "3.3.0"
+    },
+    "project": {
+        "name": "gomhangpro-app",
+        "type": "React Native (Expo)",
+        "status": "active"
+    },
+    "tech_stack": {
+        "frontend": {
+            "framework": "React Native",
+            "bundler": "Expo Router"
+        },
+        "backend": {
+            "framework": "Node.js + TypeScript + Express",
+            "hosting": "Vercel Serverless Functions",
+            "database": "Supabase (PostgreSQL)"
+        },
+        "dependencies_notable": {
+            "expo-print": "Tạo PDF từ HTML trên mobile",
+            "expo-sharing": "Share file PDF trên mobile",
+            "expo-file-system/legacy": "Đổi tên file PDF (API legacy vì Expo v54 deprecated API cũ)",
+            "expo-secure-store": "Lưu token bảo mật"
+        }
+    },
+    "database_schema": {
+        "summary": "App lưu và dùng chung dữ liệu website: thông tin nhân viên, ca làm việc, khách hàng, danh sách quầy, đơn hàng. Có logic thống kê dành cho quản lý.",
+        "relationships_explained": "Khách hàng có nhiều đơn hàng, ca làm việc gắn với nhân viên tại quầy, quản lý có quyền xem toàn bộ."
+    },
+    "api_endpoints": [
+        {
+            "path": "src/api/staff.js",
+            "explained": "CRUD - Thêm sửa xoá danh sách nhân sự"
+        },
+        {
+            "path": "src/api/customers.js",
+            "explained": "CRUD và tìm khách hàng (getCustomersListAPI load tất cả, searchCustomersAPI deprecated)"
+        },
+        {
+            "path": "src/api/shifts.js",
+            "explained": "API cho nghiệp vụ ca làm (nhận vốn, sửa vốn, kết ca)"
+        },
+        {
+            "path": "src/api/orders.js",
+            "explained": "Tạo đơn hàng, sửa/duyệt đơn, tổng hợp danh sách đơn theo ngày"
+        },
+        {
+            "path": "src/api/counters.js",
+            "explained": "Quản lý dữ liệu cài đặt các quầy hàng"
+        },
+        {
+            "path": "src/api/axiosClient.js",
+            "explained": "Cấu hình Axios client, tự động chọn API URL theo platform (web=localhost, mobile=LAN IP từ .env)"
+        }
+    ],
+    "business_rules": [
+        "Nhân viên chỉ xem ca và đơn từ mình.",
+        "Admin/Quản lý có thể xem và cấp tiền cho ca đang mở, xem dashboard toàn shop, sửa đơn của mọi người.",
+        "Tiền trả quầy (tienHang) có thể bằng 0 hoặc bỏ trống (mặc định = 0).",
+        "Các trường tiền (tienCongGom, phiDongHang, tienHoaHong) nếu bỏ trống đều được chuyển thành 0."
+    ],
+    "features": [
+        "Auth (login với error handling chi tiết)",
+        "Customer Management (tìm kiếm local filtering)",
+        "Shifts Management",
+        "Order Creation & Management",
+        "Manager Dashboard",
+        "PDF Export (web: Blob URL + print, mobile: expo-print + sharing)",
+        "Centralized Error Handling (errorHelper.js)"
+    ],
+    "knowledge_items": {
+        "patterns": [
+            "Context API cho mục đích Auth",
+            "Layout/Stack ẩn bằng Navigation Expo Router",
+            "Centralized error helper: showError() cho API errors, showValidationError() cho form validation",
+            "PDF export: web dùng Blob URL + window.open + print(), mobile dùng expo-print + expo-sharing",
+            "expo-file-system/legacy phải dùng thay vì expo-file-system vì Expo v54 deprecated API cũ",
+            "Customer/Counter search: Load tất cả dữ liệu lúc init, lọc local bằng .filter() thay vì gọi API search mỗi lần gõ",
+            "Money fields: Luôn dùng isNaN(value) ? 0 : value khi gửi API payload để tránh NaN/null"
+        ],
+        "gotchas": [
+            "Phải check token cẩn thận khi điều hướng Worker vs Manager",
+            "expo-file-system API mới (File, Paths từ /next) bị lỗi move() trên iOS - dùng /legacy thay thế",
+            "html2pdf.js + html2canvas không hoạt động tốt trên web (blank PDF) - dùng Blob URL approach",
+            "Tab bar trên iPhone cần height 85px + paddingBottom 20px cho safe area, nếu không label bị khuất",
+            "Mobile app cần .env với EXPO_PUBLIC_API_URL=http://<LAN_IP>:5000/api để kết nối backend local",
+            "PDF footer text color #999 quá mờ khi in - nên dùng #333",
+            "Vercel project name: gomhangpro_backend (có underscore), KHÔNG PHẢI gomhangprobackend. Alias: gomhangprobackend.vercel.app",
+            "Vercel deploy backend: phải link + deploy từ thư mục CHA (gomhangpro-new/), vì Vercel project đã set Root Directory = backend",
+            "Vercel Serverless: @vercel/node KHÔNG chạy npm run build — phải build dist/ local trước khi deploy",
+            "Backend validation: !tienHang khi tienHang=0 sẽ reject sai — dùng tienHang === undefined || tienHang === null || tienHang < 0",
+            "parseFloat('') trả NaN, JSON.stringify(NaN) trả null — phải convert NaN thành 0 trước khi gửi API"
+        ],
+        "conventions": [
+            "Error messages bằng tiếng Việt, có emoji icon theo loại lỗi",
+            "Tên file PDF export: hoadon.pdf (ngắn gọn, dùng FileSystem.moveAsync để rename)",
+            "Production API URL: https://gomhangprobackend.vercel.app/api"
+        ]
+    },
+    "deployment": {
+        "backend": {
+            "platform": "Vercel",
+            "project_name": "gomhangpro_backend",
+            "production_url": "https://gomhangprobackend.vercel.app",
+            "deploy_from": "gomhangpro-new/ (thư mục cha, KHÔNG deploy từ backend/)",
+            "deploy_command": "Remove-Item -Recurse -Force dist; npm run build; vercel --prod --yes",
+            "env_vars": [
+                "SUPABASE_URL",
+                "SUPABASE_SERVICE_ROLE_KEY",
+                "JWT_REFRESH_SECRET",
+                "NODE_ENV",
+                "PORT"
+            ]
+        },
+        "frontend": {
+            "platform": "EAS (Expo Application Services)",
+            "build_apk": "npx eas build --platform android --profile preview --non-interactive",
+            "build_ios": "npx eas build --platform ios --profile production --auto-submit"
+        }
+    }
+}

@@ -1,0 +1,40 @@
+{
+  "cli": {
+    "version": ">= 10.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://gomhangprobackend.vercel.app/api"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://gomhangprobackend.vercel.app/api"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6760104438",
+        "ascApiKeyPath": "../AuthKey_5J7R4423GX.p8",
+        "ascApiKeyIssuerId": "6a725f74-1d2b-4452-b564-24f42f0ac1af",
+        "ascApiKeyId": "5J7R4423GX"
+      }
+    }
+  }
+}
