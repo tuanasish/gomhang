@@ -488,6 +488,8 @@ export async function updateOrder(
       tienHoaHong?: number;
       tienThem?: number;
       loaiTienThem?: string;
+      customerName?: string;
+      counterName?: string;
     }
   >,
   res: Response
@@ -501,7 +503,9 @@ export async function updateOrder(
       phiDongHang: rawPhiDongHang,
       tienHoaHong: rawTienHoaHong,
       tienThem: rawTienThem,
-      loaiTienThem
+      loaiTienThem,
+      customerName,
+      counterName
     } = req.body;
 
     const tienHang = rawTienHang !== undefined ? parseMoney(rawTienHang) : undefined;
@@ -527,19 +531,20 @@ export async function updateOrder(
       return;
     }
 
-    // Chỉ admin hoặc chính nhân viên tạo đơn mới có quyền sửa các trường tiền
-    const isEditingMoneyFields = tienHang !== undefined || tienCongGom !== undefined ||
+    // Chỉ admin hoặc chính nhân viên tạo đơn mới có quyền sửa các trường quan trọng
+    const isEditingImportantFields = tienHang !== undefined || tienCongGom !== undefined ||
       phiDongHang !== undefined || tienHoaHong !== undefined ||
-      tienThem !== undefined || loaiTienThem !== undefined;
+      tienThem !== undefined || loaiTienThem !== undefined ||
+      customerName !== undefined || counterName !== undefined;
 
-    if (isEditingMoneyFields) {
+    if (isEditingImportantFields) {
       const isAdmin = userRole === 'admin';
       const isOwnerWorker = userRole === 'worker' && userId && existingOrder.staff_id === userId;
 
       if (!isAdmin && !isOwnerWorker) {
         res.status(403).json({
           success: false,
-          error: 'Bạn không có quyền sửa các trường tiền trong hóa đơn này',
+          error: 'Bạn không có quyền sửa các trường quan trọng trong hóa đơn này',
         });
         return;
       }
@@ -553,6 +558,28 @@ export async function updateOrder(
     if (tienHoaHong !== undefined) updateData.tien_hoa_hong = tienHoaHong;
     if (tienThem !== undefined) updateData.tien_them = tienThem;
     if (loaiTienThem !== undefined) updateData.loai_tien_them = loaiTienThem || null;
+
+    if (customerName && typeof customerName === 'string' && customerName.trim()) {
+      const nameTrimmed = customerName.trim();
+      const { data: existCust } = await supabase.from('customers').select('id').eq('name', nameTrimmed).single();
+      if (existCust) {
+        updateData.customer_id = existCust.id;
+      } else {
+        const { data: newCust } = await supabase.from('customers').insert({ name: nameTrimmed }).select('id').single();
+        if (newCust) updateData.customer_id = newCust.id;
+      }
+    }
+
+    if (counterName && typeof counterName === 'string' && counterName.trim()) {
+      const nameTrimmed = counterName.trim();
+      const { data: existCount } = await supabase.from('counters').select('id').eq('name', nameTrimmed).single();
+      if (existCount) {
+        updateData.counter_id = existCount.id;
+      } else {
+        const { data: newCount } = await supabase.from('counters').insert({ name: nameTrimmed, is_active: true }).select('id').single();
+        if (newCount) updateData.counter_id = newCount.id;
+      }
+    }
 
     // Tính lại tong_tien_hoa_don nếu có thay đổi
     const finalTienHang = tienHang !== undefined ? tienHang : parseMoney(existingOrder.tien_hang);
