@@ -574,13 +574,10 @@ async function autoResetExpiredShifts(): Promise<void> {
     const shiftIdsToUpdate = expiredShifts.map((shift: { id: string; date: string }) => shift.id);
     console.log(`Auto-resetting ${shiftIdsToUpdate.length} expired shifts.`);
 
-    // Reset tiền về 0 và kết thúc ca
+    // Kết thúc ca tự động (giữ nguyên tiền để lưu lịch sử)
     const { error: updateError } = await supabase
       .from('shifts')
       .update({
-        tien_giao_ca: 0,
-        tong_tien_hang_da_tra: 0,
-        quy_con_lai: 0,
         status: 'ended',
         end_time: new Date().toISOString(), // End at current time
         updated_at: new Date().toISOString(),
