@@ -263,7 +263,10 @@ export default function CustomerDetailScreen({ route, navigation }) {
         const timeStr = `${orderDate.getHours().toString().padStart(2, '0')}:${orderDate.getMinutes().toString().padStart(2, '0')} - ${formatDate(orderDate)}`;
 
         return (
-            <View style={styles.orderCard}>
+            <TouchableOpacity 
+                style={styles.orderCard} 
+                onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+            >
                 <View style={styles.orderCardHeader}>
                     <View>
                         <Text style={styles.counterName}>{item.counterName || 'Quầy'}</Text>
@@ -271,7 +274,7 @@ export default function CustomerDetailScreen({ route, navigation }) {
                     </View>
                     <Text style={styles.orderTotal}>{formatCurrency(item.tongTienHoaDon)}</Text>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
