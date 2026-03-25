@@ -538,10 +538,10 @@ export async function updateOrder(
       customerName !== undefined || counterName !== undefined;
 
     if (isEditingImportantFields) {
-      const isAdmin = userRole === 'admin';
+      const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
       const isOwnerWorker = userRole === 'worker' && userId && existingOrder.staff_id === userId;
 
-      if (!isAdmin && !isOwnerWorker) {
+      if (!isAdminOrManager && !isOwnerWorker) {
         res.status(403).json({
           success: false,
           error: 'Bạn không có quyền sửa các trường quan trọng trong hóa đơn này',
