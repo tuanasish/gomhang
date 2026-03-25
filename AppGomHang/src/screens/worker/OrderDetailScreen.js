@@ -471,17 +471,6 @@ const OrderDetailScreen = () => {
                                         />
                                     </View>
 
-                                    <View style={styles.editFieldGroup}>
-                                        <Text style={styles.editLabel}>Phí đóng hàng (VNĐ)</Text>
-                                        <TextInput
-                                            keyboardType="numeric"
-                                            value={formatNumberInput(editForm.phiDongHang)}
-                                            onChangeText={(text) =>
-                                                setEditForm((prev) => ({ ...prev, phiDongHang: text.replace(/\./g, '').replace(/[^0-9]/g, '') }))
-                                            }
-                                            style={styles.input}
-                                        />
-                                    </View>
 
                                     {/* Thuế */}
                                     <View style={styles.taxSection}>
@@ -572,7 +561,7 @@ const OrderDetailScreen = () => {
 
             {/* Hidden Receipt for Image Export */}
             {order && (
-                <View style={{ position: 'absolute', top: -10000, left: -10000 }} collapsable={false}>
+                <View style={{ position: 'absolute', top: -10000, left: -10000, zIndex: -1 }} pointerEvents="none" collapsable={false}>
                     <ViewShot ref={invoiceRef} options={{ format: 'jpg', quality: 0.9 }}>
                         <View
                             nativeID="order-invoice-capture"

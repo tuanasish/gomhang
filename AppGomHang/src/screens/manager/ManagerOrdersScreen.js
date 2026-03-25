@@ -470,13 +470,6 @@ export default function ManagerOrdersScreen({ navigation }) {
                                         onChangeText={t => setEditForm(prev => ({ ...prev, tienCongGom: formatNumInput(t) }))}
                                     />
 
-                                    <Text style={styles.inputLabel}>Phí đóng hàng</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        keyboardType="numeric"
-                                        value={editForm.phiDongHang}
-                                        onChangeText={t => setEditForm(prev => ({ ...prev, phiDongHang: formatNumInput(t) }))}
-                                    />
 
                                     <Text style={styles.inputLabel}>Tiền hoa hồng</Text>
                                     <TextInput

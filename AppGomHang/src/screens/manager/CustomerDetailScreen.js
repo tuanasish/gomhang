@@ -478,7 +478,7 @@ export default function CustomerDetailScreen({ route, navigation }) {
 
             {/* Hidden Receipt for Image Export */}
             {(customer && orders.length > 0) && (
-                <View style={{ position: 'absolute', top: -10000, left: -10000 }} collapsable={false}>
+                <View style={{ position: 'absolute', top: -10000, left: -10000, zIndex: -1 }} pointerEvents="none" collapsable={false}>
                     <ViewShot ref={invoiceRef} options={{ format: 'jpg', quality: 0.9 }}>
                         <View
                             nativeID="invoice-to-capture"
@@ -646,40 +646,46 @@ export default function CustomerDetailScreen({ route, navigation }) {
                                 </View>
                             </View>
 
-                            {/* Table Header */}
-                            <View style={{ flexDirection: 'row', backgroundColor: '#f0f4ff', paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 2, borderBottomColor: '#2563eb', alignItems: 'center' }}>
-                                <Text style={{ flex: 0.8, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'center' }}>STT</Text>
-                                <Text style={{ flex: 2.2, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'left', paddingLeft: 4 }}>Quầy</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Tiền ứng</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Phí gom</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'center' }}>Thuế phí{'\n'}(1.5%)</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Tổng</Text>
-                            </View>
-
-                            {orders.map((order, index) => {
-                                const orderDate = new Date(order.createdAt);
-                                const timeStr = `${orderDate.getHours().toString().padStart(2, '0')}:${orderDate.getMinutes().toString().padStart(2, '0')}`;
-                                const totalPhi = (order.phiDongHang || 0) + (order.tienThem || 0);
-
-                                return (
-                                    <View key={index} style={{ flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: index === orders.length - 1 ? 0 : 1, borderBottomColor: '#e5e7eb', alignItems: 'center' }}>
-                                        <Text style={{ flex: 0.8, fontSize: 13, color: '#374151', textAlign: 'center' }}>{index + 1}</Text>
-                                        <Text style={{ flex: 2.2, fontSize: 13, color: '#374151', textAlign: 'left', paddingLeft: 4 }}>{order.counterName || 'N/A'}</Text>
-                                        <Text style={{ flex: 1.75, fontSize: 13, color: '#374151', textAlign: 'right' }}>{formatCurrency((order.tienHang || 0) + (order.tienHoaHong || 0))}</Text>
-                                        <Text style={{ flex: 1.75, fontSize: 13, color: '#374151', textAlign: 'right' }}>{formatCurrency(order.tienCongGom || 0)}</Text>
-                                        <Text style={{ flex: 1.75, fontSize: 13, color: '#374151', textAlign: 'center' }}>{formatCurrency(totalPhi)}</Text>
-                                        <Text style={{ flex: 1.75, fontSize: 13, fontWeight: '600', color: '#2563eb', textAlign: 'right' }}>{formatCurrency(order.tongTienHoaDon || 0)}</Text>
+                            {/* Scrollable Table Area */}
+                            <ScrollView horizontal showsHorizontalScrollIndicator={true} style={{ marginTop: 8, marginBottom: 16 }}>
+                                <View style={{ minWidth: 620, paddingBottom: 8 }}>
+                                    {/* Table Header */}
+                                    <View style={{ flexDirection: 'row', backgroundColor: '#f0f4ff', paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 2, borderBottomColor: '#2563eb', alignItems: 'center' }}>
+                                        <Text style={{ width: 45, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'center' }}>STT</Text>
+                                        <Text style={{ width: 120, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'left', paddingLeft: 4 }}>Quầy</Text>
+                                        <Text style={{ width: 95, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Tiền ứng</Text>
+                                        <Text style={{ width: 90, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Hoa hồng</Text>
+                                        <Text style={{ width: 85, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Phí gom</Text>
+                                        <Text style={{ width: 85, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'center' }}>Thuế phí{'\n'}(1.5%)</Text>
+                                        <Text style={{ flex: 1, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>Tổng</Text>
                                     </View>
-                                );
-                            })}
 
-                            <View style={{ flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: 0, alignItems: 'center', backgroundColor: '#fafafa' }}>
-                                <Text style={{ flex: 3, fontWeight: 'bold', fontSize: 14, color: '#111827', textAlign: 'center' }}>TỔNG {orders.length} ĐƠN</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>{formatCurrency(stats.totalTienUng)}</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>{formatCurrency(stats.totalPhiGom)}</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'center' }}>{formatCurrency(stats.totalThuePhi)}</Text>
-                                <Text style={{ flex: 1.75, fontWeight: 'bold', fontSize: 14, color: '#2563eb', textAlign: 'right' }}>{formatCurrency(stats.totalAmount)}</Text>
-                            </View>
+                                    {orders.map((order, index) => {
+                                        const totalPhi = (order.phiDongHang || 0) + (order.tienThem || 0);
+
+                                        return (
+                                            <View key={index} style={{ flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: index === orders.length - 1 ? 0 : 1, borderBottomColor: '#e5e7eb', alignItems: 'center' }}>
+                                                <Text style={{ width: 45, fontSize: 13, color: '#374151', textAlign: 'center' }}>{index + 1}</Text>
+                                                <Text style={{ width: 120, fontSize: 13, color: '#374151', textAlign: 'left', paddingLeft: 4 }} numberOfLines={2}>{order.counterName || 'N/A'}</Text>
+                                                <Text style={{ width: 95, fontSize: 13, color: '#374151', textAlign: 'right' }}>{formatCurrency((order.tienHang || 0) + (order.tienHoaHong || 0))}</Text>
+                                                <Text style={{ width: 90, fontSize: 13, color: '#10b981', textAlign: 'right' }}>{formatCurrency(order.tienHoaHong || 0)}</Text>
+                                                <Text style={{ width: 85, fontSize: 13, color: '#374151', textAlign: 'right' }}>{formatCurrency(order.tienCongGom || 0)}</Text>
+                                                <Text style={{ width: 85, fontSize: 13, color: '#374151', textAlign: 'center' }}>{formatCurrency(totalPhi)}</Text>
+                                                <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: '#2563eb', textAlign: 'right' }}>{formatCurrency(order.tongTienHoaDon || 0)}</Text>
+                                            </View>
+                                        );
+                                    })}
+
+                                    <View style={{ flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: 0, alignItems: 'center', backgroundColor: '#fafafa' }}>
+                                        <Text style={{ width: 165, fontWeight: 'bold', fontSize: 14, color: '#111827', textAlign: 'center' }}>TỔNG {orders.length} ĐƠN</Text>
+                                        <Text style={{ width: 95, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>{formatCurrency(stats.totalTienUng)}</Text>
+                                        <Text style={{ width: 90, fontWeight: 'bold', fontSize: 13, color: '#10b981', textAlign: 'right' }}>{formatCurrency(orders.reduce((sum, o) => sum + (o.tienHoaHong || 0), 0))}</Text>
+                                        <Text style={{ width: 85, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'right' }}>{formatCurrency(stats.totalPhiGom)}</Text>
+                                        <Text style={{ width: 85, fontWeight: 'bold', fontSize: 13, color: '#111827', textAlign: 'center' }}>{formatCurrency(stats.totalThuePhi)}</Text>
+                                        <Text style={{ flex: 1, fontWeight: 'bold', fontSize: 14, color: '#2563eb', textAlign: 'right' }}>{formatCurrency(stats.totalAmount)}</Text>
+                                    </View>
+                                </View>
+                            </ScrollView>
 
                             {/* Summary Totals Table */}
                             <View style={{ marginTop: 8, borderTopWidth: 2, borderTopColor: '#2563eb' }}>
