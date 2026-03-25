@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
@@ -44,6 +44,7 @@ const WorkerHistoryScreen = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
         loadOrders();
@@ -59,9 +60,9 @@ const WorkerHistoryScreen = () => {
 
             if (response && response.success && response.data) {
                 const ordersData = response.data;
-                // Sắp xếp orders theo thời gian tạo (sớm nhất trước)
+                // Sắp xếp orders theo thời gian tạo (mới nhất lên trước)
                 const sortedOrders = ordersData.sort((a, b) => {
-                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                 });
                 setOrders(sortedOrders);
             } else {
@@ -97,9 +98,17 @@ const WorkerHistoryScreen = () => {
         });
     };
 
+    const filteredOrders = useMemo(() => {
+        if (!searchText.trim()) return orders;
+        const lowerSearch = searchText.toLowerCase();
+        return orders.filter(order => 
+            (order.customerName && order.customerName.toLowerCase().includes(lowerSearch))
+        );
+    }, [orders, searchText]);
+
     const totalTienHang = useMemo(() => {
-        return orders.reduce((sum, order) => sum + order.tienHang, 0);
-    }, [orders]);
+        return filteredOrders.reduce((sum, order) => sum + order.tienHang, 0);
+    }, [filteredOrders]);
 
     const renderStatus = (status) => {
         switch (status) {
@@ -126,17 +135,35 @@ const WorkerHistoryScreen = () => {
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Date Filter */}
+                {/* Date & Search Filter */}
                 <View style={styles.filterContainer}>
-                    <Text style={styles.filterLabel}>Chọn ngày</Text>
-                    <TouchableOpacity
-                        style={styles.dateSelector}
-                        onPress={() => setShowDatePicker(true)}
-                    >
-                        <Ionicons name="calendar-outline" size={20} color={colors.gray500} />
-                        <Text style={styles.dateText}>{formatDateDisplay(selectedDate)}</Text>
-                        <Ionicons name="chevron-down" size={20} color={colors.gray400} />
-                    </TouchableOpacity>
+                    <View style={{ marginBottom: spacing.md }}>
+                        <Text style={styles.filterLabel}>Chọn ngày</Text>
+                        <TouchableOpacity
+                            style={styles.dateSelector}
+                            onPress={() => setShowDatePicker(true)}
+                        >
+                            <Ionicons name="calendar-outline" size={20} color={colors.gray500} />
+                            <Text style={styles.dateText}>{formatDateDisplay(selectedDate)}</Text>
+                            <Ionicons name="chevron-down" size={20} color={colors.gray400} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.searchContainer}>
+                        <Ionicons name="search" size={20} color={colors.gray400} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Tìm theo tên khách hàng..."
+                            value={searchText}
+                            onChangeText={setSearchText}
+                            clearButtonMode="while-editing"
+                        />
+                        {searchText.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchText('')} style={{ padding: 4 }}>
+                                <Ionicons name="close-circle" size={20} color={colors.gray400} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
 
                 {showDatePicker && (
@@ -163,11 +190,11 @@ const WorkerHistoryScreen = () => {
                 )}
 
                 {/* Thống kê ngày */}
-                {!loading && !error && orders.length > 0 && (
+                {!loading && !error && filteredOrders.length > 0 && (
                     <View style={styles.statsCard}>
                         <View style={styles.statsRow}>
                             <Text style={styles.statsLabel}>Tổng số hóa đơn:</Text>
-                            <Text style={styles.statsValue}>{orders.length} đơn</Text>
+                            <Text style={styles.statsValue}>{filteredOrders.length} đơn</Text>
                         </View>
                         <View style={styles.statsRow}>
                             <Text style={styles.statsLabel}>Tổng tiền hàng:</Text>
@@ -179,33 +206,90 @@ const WorkerHistoryScreen = () => {
                 {/* Danh sách hóa đơn */}
                 {!loading && !error && (
                     <View style={styles.listContainer}>
-                        {orders.length > 0 ? (
+                        {filteredOrders.length > 0 ? (
                             <>
                                 <Text style={styles.listTitle}>Hóa đơn ngày {formatDateDisplay(selectedDate)}</Text>
-                                {orders.map((order, index) => (
+                                {filteredOrders.map((order, index) => (
                                     <TouchableOpacity
                                         key={order.id}
-                                        style={styles.orderCard}
+                                        style={styles.card}
                                         onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
                                     >
-                                        <View style={styles.orderLeft}>
-                                            <View style={styles.orderIndexContainer}>
-                                                <View style={styles.orderIndexCircle}>
-                                                    <Text style={styles.orderIndexText}>{index + 1}</Text>
-                                                </View>
-                                                <Text style={styles.orderTimeText}>{formatTime(order.createdAt)}</Text>
-                                            </View>
-
-                                            <View style={styles.orderInfo}>
-                                                <Text style={styles.customerName}>Khách: {order.customerName}</Text>
-                                                <Text style={styles.orderSubtext}>
-                                                    Tổng tiền: <Text style={styles.orderHighlight}>{(order.tongTienHoaDon || 0).toLocaleString('vi-VN')}đ</Text>
-                                                </Text>
-                                                <Text style={styles.orderSubtext}>Tiền hàng: {(order.tienHang || 0).toLocaleString('vi-VN')}đ</Text>
+                                        <View style={styles.cardHeader}>
+                                             <View>
+                                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                                     <View style={styles.orderIndexCircle}>
+                                                         <Text style={styles.orderIndexText}>{filteredOrders.length - index}</Text>
+                                                     </View>
+                                                     <Text style={[styles.orderDate, { fontSize: 18, fontWeight: 'bold', color: theme.colors.primary.default }]}>{formatTime(order.createdAt)}</Text>
+                                                 </View>
+                                             </View>
+                                            <View style={styles.statusBadgeWrapper}>
+                                                {renderStatus(order.status)}
                                             </View>
                                         </View>
-                                        <View style={styles.orderRight}>
-                                            {renderStatus(order.status)}
+
+                                        <View style={styles.cardBody}>
+                                            <View style={styles.cardBodyColumns}>
+                                                {/* Left column: staff & counter */}
+                                                <View style={styles.cardBodyLeft}>
+                                                     <View style={[styles.infoRow, { marginBottom: 12 }]}>
+                                                         <Text style={[styles.infoLabel, { width: 50, fontSize: 14, color: '#000', fontWeight: 'bold' }]}>Khách:</Text>
+                                                         <Text style={[styles.infoValue, { fontSize: 18, fontWeight: '700', color: '#000' }]} numberOfLines={1}>
+                                                             {order.customerName || '---'}
+                                                         </Text>
+                                                     </View>
+                                                    <View style={styles.infoRow}>
+                                                        <Text style={[styles.infoLabel, { width: 50, fontSize: 14, color: '#000', fontWeight: 'bold' }]}>Quầy:</Text>
+                                                        <Text style={[styles.infoValue, { fontSize: 18, fontWeight: '700', color: '#000' }]} numberOfLines={1}>
+                                                            {order.counterName || '---'}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                {/* Right column: financial details */}
+                                                <View style={styles.cardBodyRight}>
+                                                    <View style={styles.moneyRow}>
+                                                        <Text style={styles.moneyLabel}>Tiền hàng:</Text>
+                                                        <Text style={styles.moneyValue}>{formatCurrency(order.tienHang || 0)}</Text>
+                                                    </View>
+
+                                                    {!!order.tienHoaHong && order.tienHoaHong > 0 && (
+                                                        <View style={styles.moneyRow}>
+                                                            <Text style={styles.moneyLabel}>Hoa hồng:</Text>
+                                                            <Text style={[styles.moneyValue, { color: '#059669' }]}>
+                                                                {formatCurrency(order.tienHoaHong)}
+                                                            </Text>
+                                                        </View>
+                                                    )}
+
+                                                    {!!order.tienCongGom && order.tienCongGom > 0 && (
+                                                        <View style={styles.moneyRow}>
+                                                            <Text style={styles.moneyLabel}>Phí gom:</Text>
+                                                            <Text style={styles.moneyValue}>{formatCurrency(order.tienCongGom)}</Text>
+                                                        </View>
+                                                    )}
+
+                                                    {!!order.phiDongHang && order.phiDongHang > 0 && (
+                                                        <View style={styles.moneyRow}>
+                                                            <Text style={styles.moneyLabel}>Phí đóng:</Text>
+                                                            <Text style={styles.moneyValue}>{formatCurrency(order.phiDongHang)}</Text>
+                                                        </View>
+                                                    )}
+
+                                                    {!!order.tienThem && order.tienThem > 0 && (
+                                                        <View style={styles.moneyRow}>
+                                                            <Text style={styles.moneyLabel}>{order.loaiTienThem || 'Thuế/Phí'}:</Text>
+                                                            <Text style={styles.moneyValue}>{formatCurrency(order.tienThem)}</Text>
+                                                        </View>
+                                                    )}
+
+                                                    <View style={[styles.moneyRow, styles.totalRow]}>
+                                                        <Text style={styles.totalLabel}>Tổng:</Text>
+                                                        <Text style={styles.totalValue}>{formatCurrency(order.tongTienHoaDon || 0)}</Text>
+                                                    </View>
+                                                </View>
+                                            </View>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
@@ -214,7 +298,7 @@ const WorkerHistoryScreen = () => {
                             <View style={styles.emptyContainer}>
                                 <Ionicons name="receipt-outline" size={64} color={colors.gray300} />
                                 <Text style={styles.emptyTitle}>Không có hóa đơn nào</Text>
-                                <Text style={styles.emptySubtext}>Chọn ngày khác để xem lịch sử hóa đơn</Text>
+                                <Text style={styles.emptySubtext}>{searchText ? 'Không tìm thấy khách hàng phù hợp' : 'Chọn ngày khác để xem lịch sử hóa đơn'}</Text>
                             </View>
                         )}
                     </View>
@@ -271,6 +355,21 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.md,
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.gray100,
+        borderRadius: borderRadius.md,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 8,
+    },
+    searchInput: {
+        flex: 1,
+        marginLeft: spacing.sm,
+        fontSize: typography.sizes.md,
+        color: colors.gray900,
+        paddingVertical: 0,
     },
     dateText: {
         flex: 1,
@@ -334,67 +433,115 @@ const styles = StyleSheet.create({
         color: colors.gray900,
         marginBottom: spacing.md,
     },
-    orderCard: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        padding: spacing.md,
-        borderRadius: borderRadius.lg,
-        marginBottom: spacing.sm,
+    card: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
         borderWidth: 1,
         borderColor: colors.gray200,
     },
-    orderLeft: {
+    cardHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    orderIndexContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: spacing.md,
-        width: 60,
+        justifyContent: 'space-between',
+        marginBottom: 16,
     },
     orderIndexCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
         backgroundColor: colors.blue50,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 4,
+        marginRight: 8,
     },
     orderIndexText: {
         color: colors.primary,
         fontWeight: typography.weights.bold,
-        fontSize: typography.sizes.md,
-    },
-    orderTimeText: {
-        fontSize: typography.sizes.xs,
-        color: colors.gray500,
-        textAlign: 'center',
-    },
-    orderInfo: {
-        flex: 1,
+        fontSize: 12,
     },
     customerName: {
-        fontSize: typography.sizes.md,
-        fontWeight: typography.weights.semibold,
-        color: colors.gray900,
-        marginBottom: 2,
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#000',
     },
-    orderSubtext: {
-        fontSize: typography.sizes.sm,
-        color: colors.gray500,
-        marginBottom: 2,
+    orderDate: {
+        fontSize: 13,
+        color: '#666',
+        marginTop: 4,
     },
-    orderHighlight: {
-        fontWeight: typography.weights.medium,
-        color: colors.gray900,
+    statusBadgeWrapper: {
+        alignSelf: 'flex-start',
     },
-    orderRight: {
-        marginLeft: spacing.sm,
+    cardBody: {
+        borderTopWidth: 1,
+        borderTopColor: '#F2F2F7',
+        paddingTop: 12,
+    },
+    cardBodyColumns: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    cardBodyLeft: {
+        flex: 1.2, // Rộng hơn một chút để chứa text to
+        justifyContent: 'center',
+    },
+    cardBodyRight: {
+        flex: 1,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10, // Giãn cách nhẹ
+        gap: 6,
+    },
+    infoLabel: {
+        fontSize: 12,
+        color: '#8E8E93',
+        fontWeight: '500',
+        width: 38, // Cố định nhẹ độ rộng label để text NV/Quầy thẳng hàng
+    },
+    infoValue: {
+        fontSize: 13,
+        color: '#333',
+        fontWeight: '600',
+        flexShrink: 1,
+    },
+    moneyRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 6, // Rộng rãi hơn 1 chút
+    },
+    moneyLabel: {
+        fontSize: 12,
+        color: '#666',
+    },
+    moneyValue: {
+        fontSize: 13,
+        color: '#111',
+        fontWeight: '500',
+    },
+    totalRow: {
+        borderTopWidth: 1,
+        borderTopColor: '#E5E5EA',
+        paddingTop: 6,
+        marginTop: 4,
+    },
+    totalLabel: {
+        fontSize: 14,
+        color: '#111',
+        fontWeight: 'bold',
+    },
+    totalValue: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        color: theme?.colors?.primary?.default || '#007AFF',
     },
     statusBadge: {
         paddingHorizontal: spacing.sm,

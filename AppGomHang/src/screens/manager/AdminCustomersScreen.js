@@ -24,10 +24,7 @@ import { theme } from '../../theme/theme';
 import { formatCurrency, formatDate, getLocalDateString } from '../../utils/helpers';
 
 import {
-    useCustomersList,
-    useCreateCustomer,
-    useUpdateCustomer,
-    useDeleteCustomer
+    useCustomersList
 } from '../../hooks/queries/useCustomers';
 import { useOrdersByDate } from '../../hooks/queries/useOrders';
 import { getAllCustomerDailyFeesAPI } from '../../api/customers';
@@ -85,14 +82,6 @@ export default function AdminCustomersScreen({ navigation }) {
         }, [fetchInvoiceStatus])
     );
 
-    // Use derived state
-    const customers = useMemo(() => {
-        if (!customersData) return [];
-        if (customersData.success && Array.isArray(customersData.data)) return customersData.data;
-        if (Array.isArray(customersData)) return customersData;
-        return [];
-    }, [customersData]);
-
     const orders = useMemo(() => {
         if (!ordersData) return [];
         if (ordersData.success && Array.isArray(ordersData.data)) return ordersData.data;
@@ -100,19 +89,19 @@ export default function AdminCustomersScreen({ navigation }) {
         return [];
     }, [ordersData]);
 
-    // Mutations
-    const createCustomerMutation = useCreateCustomer();
-    const updateCustomerMutation = useUpdateCustomer();
-    const deleteCustomerMutation = useDeleteCustomer();
+    // Use derived state
+    const customers = useMemo(() => {
+        let allCustomers = [];
+        if (!customersData) allCustomers = [];
+        else if (customersData.success && Array.isArray(customersData.data)) allCustomers = customersData.data;
+        else if (Array.isArray(customersData)) allCustomers = customersData;
 
-    const [modalVisible, setModalVisible] = useState(false);
-    const [editingCustomer, setEditingCustomer] = useState(null);
-    const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        defaultTax: '',
-        defaultTienCongGom: ''
-    });
+        // Filter customers: only show those who have orders in the current selected date
+        const customerIdsWithOrders = new Set(orders.map(order => order.customerId));
+        return allCustomers.filter(customer => customerIdsWithOrders.has(customer.id));
+    }, [customersData, orders]);
+
+    // Removed CRUD logic (moved to AdminAllCustomersScreen)
 
     const handleRefresh = useCallback(() => {
         refetchCustomers();
@@ -137,89 +126,7 @@ export default function AdminCustomersScreen({ navigation }) {
         };
     };
 
-    const handleSave = () => {
-        if (!formData.name.trim()) {
-            showValidationError('Vui lòng nhập tên khách hàng');
-            return;
-        }
-
-        const payload = {
-            name: formData.name.trim(),
-            phone: formData.phone ? formData.phone.trim() : '',
-            address: formData.defaultTax ? formData.defaultTax.trim() : '',
-            defaultTienCongGom: formData.defaultTienCongGom ? parseInt(formData.defaultTienCongGom) : null,
-        };
-
-        if (editingCustomer) {
-            updateCustomerMutation.mutate(
-                { customerId: editingCustomer.id, customerData: payload },
-                {
-                    onSuccess: () => {
-                        Alert.alert('Thành công', 'Đã cập nhật thông tin khách hàng');
-                        closeModal();
-                    },
-                    onError: (error) => showError(error, 'cập nhật thông tin khách hàng')
-                }
-            );
-        } else {
-            createCustomerMutation.mutate(
-                payload,
-                {
-                    onSuccess: () => {
-                        Alert.alert('Thành công', 'Đã thêm khách hàng mới');
-                        closeModal();
-                    },
-                    onError: (error) => showError(error, 'tạo khách hàng')
-                }
-            );
-        }
-    };
-
-    const handleDelete = (id) => {
-        Alert.alert(
-            'Xác nhận xóa',
-            'Bạn có chắc chắn muốn xóa khách hàng này?',
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Xóa',
-                    style: 'destructive',
-                    onPress: () => {
-                        deleteCustomerMutation.mutate(id, {
-                            onSuccess: () => Alert.alert('Thành công', 'Đã xóa khách hàng'),
-                            onError: (error) => showError(error, 'xóa khách hàng')
-                        });
-                    }
-                }
-            ]
-        );
-    };
-
-    const openModal = (customer = null) => {
-        if (customer) {
-            setEditingCustomer(customer);
-            setFormData({
-                name: customer.name,
-                phone: customer.phone || '',
-                defaultTax: customer.address || '',
-                defaultTienCongGom: customer.defaultTienCongGom ? customer.defaultTienCongGom.toString() : ''
-            });
-        } else {
-            setEditingCustomer(null);
-            setFormData({
-                name: '',
-                phone: '',
-                defaultTax: '',
-                defaultTienCongGom: ''
-            });
-        }
-        setModalVisible(true);
-    };
-
-    const closeModal = () => {
-        setModalVisible(false);
-        setEditingCustomer(null);
-    };
+    // Removed functions (handleSave, handleDelete, openModal, closeModal)
 
     const renderDateSelector = () => (
         <View style={styles.dateSelectorContainer}>
@@ -272,16 +179,7 @@ export default function AdminCustomersScreen({ navigation }) {
                             </Text>
                         )}
                     </View>
-                    {isAdmin && (
-                        <View style={styles.actionRowContainer}>
-                            <TouchableOpacity style={styles.actionBtn} onPress={() => openModal(item)}>
-                                <Ionicons name="create-outline" size={22} color={theme?.colors?.primary?.default || '#007AFF'} />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(item.id)}>
-                                <Ionicons name="trash-outline" size={22} color="#FF3B30" />
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                    {/* Removed action buttons */}
                 </View>
 
                 <View style={styles.statsContainer}>
@@ -302,20 +200,13 @@ export default function AdminCustomersScreen({ navigation }) {
     };
 
     const isAnyRefetching = isCustomersRefetching || isOrdersRefetching;
-    const isMutationPending = createCustomerMutation.isPending || updateCustomerMutation.isPending;
+
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Quản lý Khách hàng</Text>
-                {isAdmin && (
-                    <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => openModal()}
-                    >
-                        <Ionicons name="add" size={24} color="#FFF" />
-                    </TouchableOpacity>
-                )}
+                {/* Removed Add Button */}
             </View>
 
             {renderDateSelector()}
@@ -344,97 +235,7 @@ export default function AdminCustomersScreen({ navigation }) {
                 />
             )}
 
-            {/* Modal Thêm/Sửa */}
-            <Modal
-                visible={modalVisible}
-                transparent={true}
-                animationType="slide"
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={{ flex: 1 }}
-                >
-                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <View style={styles.modalOverlay}>
-                            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                                <View style={styles.modalContent}>
-                                    <View style={styles.modalHeader}>
-                                        <Text style={styles.modalTitle}>
-                                            {editingCustomer ? 'Sửa thông tin' : 'Thêm khách hàng mới'}
-                                        </Text>
-                                        <TouchableOpacity onPress={closeModal}>
-                                            <Ionicons name="close" size={24} color="#333" />
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    <View style={styles.formGroup}>
-                                        <Text style={styles.label}>Tên khách hàng *</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={formData.name}
-                                            onChangeText={(text) => setFormData({ ...formData, name: text })}
-                                            placeholder="Nhập tên khách hàng"
-                                            placeholderTextColor={theme.colors.text.hint}
-                                        />
-                                    </View>
-
-                                    <View style={styles.formGroup}>
-                                        <Text style={styles.label}>Số điện thoại</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={formData.phone}
-                                            onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                                            placeholder="Nhập số điện thoại"
-                                            placeholderTextColor={theme.colors.text.hint}
-                                            keyboardType="phone-pad"
-                                        />
-                                    </View>
-
-                                    <View style={styles.formGroup}>
-                                        <Text style={styles.label}>Thuế mặc định (%)</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={formData.defaultTax}
-                                            onChangeText={(text) => setFormData({ ...formData, defaultTax: text })}
-                                            placeholder="VD: 1.5"
-                                            placeholderTextColor={theme.colors.text.hint}
-                                            keyboardType="decimal-pad"
-                                        />
-                                        <Text style={styles.helpText}>Tự động điền khi tạo đơn cho khách này</Text>
-                                    </View>
-
-                                    <View style={styles.formGroup}>
-                                        <Text style={styles.label}>Phí gom mặc định (VNĐ)</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={formData.defaultTienCongGom}
-                                            onChangeText={(text) => setFormData({ ...formData, defaultTienCongGom: text })}
-                                            placeholder="VD: 50000"
-                                            placeholderTextColor={theme.colors.text.hint}
-                                            keyboardType="numeric"
-                                        />
-                                        <Text style={styles.helpText}>Tự động điền khi tạo đơn cho khách này</Text>
-                                    </View>
-
-                                    <TouchableOpacity
-                                        style={styles.submitButton}
-                                        onPress={handleSave}
-                                        disabled={isMutationPending}
-                                    >
-                                        {isMutationPending ? (
-                                            <ActivityIndicator color="#FFF" />
-                                        ) : (
-                                            <Text style={styles.submitButtonText}>
-                                                {editingCustomer ? 'Lưu thay đổi' : 'Thêm khách hàng'}
-                                            </Text>
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
-                            </TouchableWithoutFeedback>
-                        </View>
-                    </TouchableWithoutFeedback>
-                </KeyboardAvoidingView>
-            </Modal>
+            {/* Removed Modal */}
         </View>
     );
 }

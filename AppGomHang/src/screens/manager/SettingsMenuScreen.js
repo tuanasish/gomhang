@@ -25,6 +25,7 @@ export default function SettingsMenuScreen({ navigation }) {
             <View style={styles.menuContainer}>
                 {renderMenuItem("Quản lý Nhân sự", "people", "AdminStaff")}
                 {renderMenuItem("Quản lý Quầy", "business", "AdminCounters")}
+                {renderMenuItem("Quản lý Khách hàng", "person-outline", "AdminAllCustomers")}
                 {renderMenuItem("Tài khoản Cá nhân", "person", "Profile")}
             </View>
         </View>

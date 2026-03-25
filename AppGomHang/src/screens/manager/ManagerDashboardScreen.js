@@ -268,8 +268,15 @@ export default function ManagerDashboardScreen() {
 
                     <View style={styles.statRow}>
                         <Text style={styles.statLabel}>Nhân viên đã chi</Text>
-                        <Text style={[styles.statValueBold, { color: theme.colors.primary.default }]}>
+                        <Text style={[styles.statValueBold, { color: '#000' }]}>
                             {formatCurrency(stats.totalTienHangDaTraTheoNgay)}
+                        </Text>
+                    </View>
+
+                    <View style={styles.statRow}>
+                        <Text style={styles.statLabel}>Số dư còn lại</Text>
+                        <Text style={[styles.statValueBold, { color: '#000' }]}>
+                            {formatCurrency(stats.totalTienGiaoCaTheoNgay - stats.totalTienHangDaTraTheoNgay)}
                         </Text>
                     </View>
 
@@ -309,10 +316,17 @@ export default function ManagerDashboardScreen() {
                         </Text>
                     </View>
 
-                    <View style={[styles.statRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                    <View style={styles.statRow}>
                         <Text style={styles.statLabel}>Tổng đơn</Text>
                         <Text style={[styles.statValueBold, { color: theme.colors.primary.default }]}>
                             {stats.totalSoDon} đơn
+                        </Text>
+                    </View>
+
+                    <View style={[styles.statRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                        <Text style={styles.statLabel}>Tổng doanh thu</Text>
+                        <Text style={[styles.statValueBold, { color: '#22c55e' }]}>
+                            {formatCurrency(stats.totalTienCongGomTheoNgay + stats.totalThueTheoNgay + totalPhiDongGui + stats.totalTienHoaHongTheoNgay)}
                         </Text>
                     </View>
                 </View>

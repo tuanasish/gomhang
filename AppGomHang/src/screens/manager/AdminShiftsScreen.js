@@ -35,13 +35,16 @@ import { useStaffList } from '../../hooks/queries/useStaff';
 
 // Format helpers for money input
 const formatMoneyInput = (value) => {
-    const digitsOnly = value.replace(/\D/g, '');
-    if (!digitsOnly) return '';
-    return digitsOnly.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    if (!value) return '';
+    const isNegative = value.toString().startsWith('-');
+    const digitsOnly = value.toString().replace(/\D/g, '');
+    if (!digitsOnly) return isNegative ? '-' : '';
+    return (isNegative ? '-' : '') + digitsOnly.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 const parseMoneyValue = (value) => {
-    const normalized = value.replace(/\./g, '');
-    return normalized ? Number(normalized) : 0;
+    if (!value || value === '-') return 0;
+    const normalized = value.toString().replace(/\./g, '');
+    return Number(normalized);
 };
 
 export default function AdminShiftsScreen({ navigation }) {
@@ -308,6 +311,10 @@ export default function AdminShiftsScreen({ navigation }) {
                         <Text style={styles.statLabel}>Số đơn</Text>
                         <Text style={styles.statValue}>{item.soDonHang}</Text>
                     </View>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statLabel}>Hoa hồng</Text>
+                        <Text style={[styles.statValue, { color: '#4CAF50' }]}>{formatCurrency(item.tongHoaHong || 0)}</Text>
+                    </View>
                 </View>
 
                 <View style={styles.cardActions}>
@@ -478,6 +485,10 @@ export default function AdminShiftsScreen({ navigation }) {
                                                     <Text style={styles.detailLabel}>Số đơn:</Text>
                                                     <Text style={[styles.detailValue, { fontWeight: 'bold' }]}>{detailShift.soDonHang}</Text>
                                                 </View>
+                                                <View style={styles.detailRow}>
+                                                    <Text style={styles.detailLabel}>Hoa hồng:</Text>
+                                                    <Text style={[styles.detailValue, { fontWeight: 'bold', color: '#4CAF50' }]}>{formatCurrency(detailShift.tongHoaHong || 0)}</Text>
+                                                </View>
 
                                                 {/* Lịch sử thêm tiền (in Detail Shift) */}
                                                 <View style={{ height: 1, backgroundColor: '#E5E5EA', marginVertical: 16 }} />
@@ -643,7 +654,7 @@ export default function AdminShiftsScreen({ navigation }) {
                                                 onChangeText={(t) => setMoneyAmount(formatMoneyInput(t))}
                                                 placeholder="VD: 100.000"
                                                 placeholderTextColor={theme.colors.text.hint}
-                                                keyboardType="numeric"
+                                                keyboardType="numbers-and-punctuation"
                                             />
                                         </View>
 
@@ -699,7 +710,7 @@ export default function AdminShiftsScreen({ navigation }) {
                                                                     value={editAmount}
                                                                     onChangeText={(t) => setEditAmount(formatMoneyInput(t))}
                                                                     placeholder="Số tiền"
-                                                                    keyboardType="numeric"
+                                                                    keyboardType="numbers-and-punctuation"
                                                                 />
                                                                 <TextInput
                                                                     style={[styles.input, { marginBottom: 8, height: 60 }]}
@@ -731,7 +742,9 @@ export default function AdminShiftsScreen({ navigation }) {
                                                         ) : (
                                                             <View>
                                                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                    <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#333' }}>+{formatCurrency(addition.amount)}</Text>
+                                                                    <Text style={{ fontSize: 15, fontWeight: 'bold', color: addition.amount < 0 ? '#F44336' : '#333' }}>
+                                                                        {addition.amount > 0 ? '+' : ''}{formatCurrency(addition.amount)}
+                                                                    </Text>
                                                                     <View style={{ flexDirection: 'row', gap: 8 }}>
                                                                         <TouchableOpacity
                                                                             onPress={() => {

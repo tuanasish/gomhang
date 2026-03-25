@@ -50,11 +50,19 @@ export default function ManagerOrdersScreen({ navigation }) {
     });
 
     const [thueStr, setThueStr] = useState('');
+
+    const formatNumInput = (val) => {
+        const digits = String(val).replace(/[^0-9]/g, '');
+        if (!digits) return '0';
+        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
     const tienThue = useMemo(() => {
-        const base = parseInt(editForm.tienHang) || 0;
+        const base = parseInt(String(editForm.tienHang).replace(/\./g, '')) || 0;
+        const congGom = parseInt(String(editForm.tienCongGom).replace(/\./g, '')) || 0;
         const rate = parseFloat(thueStr.replace(',', '.')) || 0;
-        return Math.round(base * (rate / 100));
-    }, [editForm.tienHang, thueStr]);
+        return Math.round((base + congGom) * (rate / 100));
+    }, [editForm.tienHang, editForm.tienCongGom, thueStr]);
 
     const [ordersRes, setOrdersRes] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -175,11 +183,11 @@ export default function ManagerOrdersScreen({ navigation }) {
         setEditForm({
             customerName: order.customerName || '',
             counterName: order.counterName || '',
-            tienHang: order.tienHang.toString(),
-            tienCongGom: order.tienCongGom.toString(),
-            phiDongHang: order.phiDongHang.toString(),
-            tienHoaHong: (order.tienHoaHong || 0).toString(),
-            tienThem: (order.tienThem || 0).toString(),
+            tienHang: formatNumInput(order.tienHang),
+            tienCongGom: formatNumInput(order.tienCongGom),
+            phiDongHang: formatNumInput(order.phiDongHang),
+            tienHoaHong: formatNumInput(order.tienHoaHong || 0),
+            tienThem: formatNumInput(order.tienThem || 0),
             loaiTienThem: order.loaiTienThem || ''
         });
 
@@ -198,18 +206,18 @@ export default function ManagerOrdersScreen({ navigation }) {
     };
 
     const handleSaveEdit = async () => {
-        const tienHang = parseInt(editForm.tienHang) || 0;
-        const tienCongGom = parseInt(editForm.tienCongGom) || 0;
-        const phiDongHang = parseInt(editForm.phiDongHang) || 0;
-        const tienHoaHong = parseInt(editForm.tienHoaHong) || 0;
+        const tienHang = parseInt(String(editForm.tienHang).replace(/\./g, '')) || 0;
+        const tienCongGom = parseInt(String(editForm.tienCongGom).replace(/\./g, '')) || 0;
+        const phiDongHang = parseInt(String(editForm.phiDongHang).replace(/\./g, '')) || 0;
+        const tienHoaHong = parseInt(String(editForm.tienHoaHong).replace(/\./g, '')) || 0;
 
-        let tienThem = parseInt(editForm.tienThem) || 0;
+        let tienThem = parseInt(String(editForm.tienThem).replace(/\./g, '')) || 0;
         let loaiTienThem = editForm.loaiTienThem || null;
 
         if (tienThue > 0 || thueStr !== '') {
             const rate = parseFloat(thueStr.replace(',', '.')) || 0;
-            if (Math.round(tienHang * rate / 100) > 0) {
-                tienThem = Math.round(tienHang * rate / 100);
+            if (Math.round((tienHang + tienCongGom) * rate / 100) > 0) {
+                tienThem = Math.round((tienHang + tienCongGom) * rate / 100);
                 loaiTienThem = `Thuế ${rate}%`;
             } else if (loaiTienThem && loaiTienThem.startsWith('Thuế')) {
                 tienThem = 0;
@@ -451,7 +459,7 @@ export default function ManagerOrdersScreen({ navigation }) {
                                         style={styles.input}
                                         keyboardType="numeric"
                                         value={editForm.tienHang}
-                                        onChangeText={t => setEditForm(prev => ({ ...prev, tienHang: t }))}
+                                        onChangeText={t => setEditForm(prev => ({ ...prev, tienHang: formatNumInput(t) }))}
                                     />
 
                                     <Text style={styles.inputLabel}>Phí gom</Text>
@@ -459,7 +467,7 @@ export default function ManagerOrdersScreen({ navigation }) {
                                         style={styles.input}
                                         keyboardType="numeric"
                                         value={editForm.tienCongGom}
-                                        onChangeText={t => setEditForm(prev => ({ ...prev, tienCongGom: t }))}
+                                        onChangeText={t => setEditForm(prev => ({ ...prev, tienCongGom: formatNumInput(t) }))}
                                     />
 
                                     <Text style={styles.inputLabel}>Phí đóng hàng</Text>
@@ -467,7 +475,7 @@ export default function ManagerOrdersScreen({ navigation }) {
                                         style={styles.input}
                                         keyboardType="numeric"
                                         value={editForm.phiDongHang}
-                                        onChangeText={t => setEditForm(prev => ({ ...prev, phiDongHang: t }))}
+                                        onChangeText={t => setEditForm(prev => ({ ...prev, phiDongHang: formatNumInput(t) }))}
                                     />
 
                                     <Text style={styles.inputLabel}>Tiền hoa hồng</Text>
@@ -475,7 +483,7 @@ export default function ManagerOrdersScreen({ navigation }) {
                                         style={styles.input}
                                         keyboardType="numeric"
                                         value={editForm.tienHoaHong}
-                                        onChangeText={t => setEditForm(prev => ({ ...prev, tienHoaHong: t }))}
+                                        onChangeText={t => setEditForm(prev => ({ ...prev, tienHoaHong: formatNumInput(t) }))}
                                     />
 
                                     {/* Thuế */}
@@ -507,7 +515,7 @@ export default function ManagerOrdersScreen({ navigation }) {
                                             </TouchableOpacity>
                                             {tienThue > 0 && (
                                                 <Text style={styles.taxAmount}>
-                                                    = {tienThue.toLocaleString('vi-VN')}đ
+                                                    = {String(tienThue).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ
                                                 </Text>
                                             )}
                                         </View>

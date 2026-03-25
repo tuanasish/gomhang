@@ -6,7 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import Button from '../../components/common/Button';
-import { getOrderByIdAPI, updateOrderAPI } from '../../api/orders';
+import { getOrderByIdAPI, updateOrderAPI, deleteOrderAPI } from '../../api/orders';
 const { spacing, typography, borderRadius } = theme;
 const colors = {
     background: theme.colors.background.light,
@@ -51,16 +51,24 @@ const OrderDetailScreen = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [editForm, setEditForm] = useState({
         tienHang: 0,
+        tienHoaHong: 0,
         tienCongGom: 0,
         phiDongHang: 0,
         tienThem: 0,
         loaiTienThem: '',
     });
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const [thueStr, setThueStr] = useState('');
     const currentTienHang = Number(editForm.tienHang) || 0;
+    const currentTienCongGom = Number(editForm.tienCongGom) || 0;
     const thuePhanTram = thueStr ? parseFloat(thueStr.replace(',', '.')) : 0;
-    const tienThue = !isNaN(thuePhanTram) && !isNaN(currentTienHang) ? Math.round(currentTienHang * thuePhanTram / 100) : 0;
+    const tienThue = !isNaN(thuePhanTram) && !isNaN(currentTienHang) && !isNaN(currentTienCongGom) ? Math.round((currentTienHang + currentTienCongGom) * thuePhanTram / 100) : 0;
+
+    const formatNumberInput = (num) => {
+        if (num === null || num === undefined || num === '') return '';
+        return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
 
     useEffect(() => {
         loadOrder();
@@ -96,6 +104,11 @@ const OrderDetailScreen = () => {
         const dateStr = date.toLocaleDateString('vi-VN');
         const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         return `${timeStr} - ${dateStr}`;
+    };
+
+    const formatMoney = (num) => {
+        const n = Number(num) || 0;
+        return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '\u0111';
     };
 
     const handleExportImage = async () => {
@@ -165,6 +178,7 @@ const OrderDetailScreen = () => {
             customerName: order.customerName || '',
             counterName: order.counterName || '',
             tienHang: order.tienHang || 0,
+            tienHoaHong: order.tienHoaHong || 0,
             tienCongGom: order.tienCongGom || 0,
             phiDongHang: order.phiDongHang || 0,
             tienThem: order.tienThem || 0,
@@ -193,6 +207,7 @@ const OrderDetailScreen = () => {
         if (!order) return;
 
         const tienHang = Number(editForm.tienHang) || 0;
+        const tienHoaHong = Number(editForm.tienHoaHong) || 0;
         const tienCongGom = Number(editForm.tienCongGom) || 0;
         const phiDongHang = Number(editForm.phiDongHang) || 0;
 
@@ -201,8 +216,8 @@ const OrderDetailScreen = () => {
 
         // Tự động tính lại thuế nếu có nhập % thuế
         if (tienThue > 0 || thueStr !== '') {
-            if (Math.round(tienHang * thuePhanTram / 100) > 0) {
-                finalTienThem = Math.round(tienHang * thuePhanTram / 100);
+            if (Math.round((tienHang + tienCongGom) * thuePhanTram / 100) > 0) {
+                finalTienThem = Math.round((tienHang + tienCongGom) * thuePhanTram / 100);
                 finalLoaiTienThem = `Thuế ${thuePhanTram}%`;
             } else if (finalLoaiTienThem.startsWith('Thuế')) {
                 finalTienThem = 0;
@@ -210,8 +225,8 @@ const OrderDetailScreen = () => {
             }
         }
 
-        if (tienHang <= 0) {
-            setError('Tiền hàng phải lớn hơn 0');
+        if (isNaN(tienHang) || tienHang < 0) {
+            setError('Tiền hàng không hợp lệ (phải >= 0)');
             return;
         }
 
@@ -233,6 +248,7 @@ const OrderDetailScreen = () => {
                 customerName: editForm.customerName || null,
                 counterName: editForm.counterName || null,
                 tienHang,
+                tienHoaHong,
                 tienCongGom,
                 phiDongHang,
             };
@@ -259,6 +275,48 @@ const OrderDetailScreen = () => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleDeleteOrder = () => {
+        if (!order) return;
+
+        Alert.alert(
+            "Xác nhận xóa",
+            "Bạn có chắc chắn muốn xóa đơn hàng này? Thao tác này không thể hoàn tác.",
+            [
+                { text: "Hủy", style: "cancel" },
+                {
+                    text: "Xóa",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsDeleting(true);
+                        try {
+                            const response = await deleteOrderAPI(order.id);
+                            if (response && response.success) {
+                                if (Platform.OS === 'web') {
+                                    window.alert('Xóa đơn hàng thành công');
+                                } else {
+                                    Alert.alert('Thành công', 'Đã xóa đơn hàng');
+                                }
+                                navigation.goBack(); // Quay lại màn hình lịch sử
+                            } else {
+                                throw new Error(response?.error || 'Không thể xóa đơn hàng');
+                            }
+                        } catch (err) {
+                            console.error('Delete order error:', err);
+                            const errMsg = err.message || 'Có lỗi xảy ra khi xóa đơn hàng';
+                            if (Platform.OS === 'web') {
+                                window.alert(errMsg);
+                            } else {
+                                Alert.alert('Lỗi', errMsg);
+                            }
+                        } finally {
+                            setIsDeleting(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     if (loading) {
@@ -316,37 +374,37 @@ const OrderDetailScreen = () => {
 
                             <View style={styles.moneyRow}>
                                 <Text style={styles.moneyLabel}>Tiền hàng (trả cho quầy)</Text>
-                                <Text style={styles.moneyValue}>{(order.tienHang || 0).toLocaleString('vi-VN')}đ</Text>
+                                <Text style={styles.moneyValue}>{formatMoney(order.tienHang)}</Text>
                             </View>
 
                             {(order.tienHoaHong > 0) && (
                                 <View style={styles.moneyRow}>
                                     <Text style={styles.moneyLabel}>Hoa hồng</Text>
-                                    <Text style={styles.moneyValue}>{(order.tienHoaHong || 0).toLocaleString('vi-VN')}đ</Text>
+                                    <Text style={styles.moneyValue}>{formatMoney(order.tienHoaHong)}</Text>
                                 </View>
                             )}
 
                             <View style={styles.moneyRow}>
                                 <Text style={styles.moneyLabel}>Phí gom</Text>
-                                <Text style={styles.moneyValue}>{(order.tienCongGom || 0).toLocaleString('vi-VN')}đ</Text>
+                                <Text style={styles.moneyValue}>{formatMoney(order.tienCongGom)}</Text>
                             </View>
 
                             <View style={styles.moneyRow}>
                                 <Text style={styles.moneyLabel}>Phí đóng hàng</Text>
-                                <Text style={styles.moneyValue}>{(order.phiDongHang || 0).toLocaleString('vi-VN')}đ</Text>
+                                <Text style={styles.moneyValue}>{formatMoney(order.phiDongHang)}</Text>
                             </View>
 
 
                             {(order.tienThem !== undefined && order.tienThem !== null && order.tienThem > 0) && (
                                 <View style={[styles.moneyRow, styles.borderTop]}>
                                     <Text style={styles.moneyLabel}>{order.loaiTienThem || 'Tiền thêm'}</Text>
-                                    <Text style={styles.moneyValue}>{(order.tienThem || 0).toLocaleString('vi-VN')}đ</Text>
+                                    <Text style={styles.moneyValue}>{formatMoney(order.tienThem)}</Text>
                                 </View>
                             )}
 
                             <View style={[styles.moneyRow, styles.borderTop, styles.totalRow]}>
                                 <Text style={styles.totalLabel}>Tổng tiền hóa đơn</Text>
-                                <Text style={styles.totalValue}>{(order.tongTienHoaDon || 0).toLocaleString('vi-VN')}đ</Text>
+                                <Text style={styles.totalValue}>{formatMoney(order.tongTienHoaDon)}</Text>
                             </View>
 
                             {isEditing && (
@@ -381,9 +439,21 @@ const OrderDetailScreen = () => {
                                         <Text style={styles.editLabel}>Tiền hàng (VNĐ) *</Text>
                                         <TextInput
                                             keyboardType="numeric"
-                                            value={String(editForm.tienHang)}
+                                            value={formatNumberInput(editForm.tienHang)}
                                             onChangeText={(text) =>
-                                                setEditForm((prev) => ({ ...prev, tienHang: text.replace(/[^0-9]/g, '') }))
+                                                setEditForm((prev) => ({ ...prev, tienHang: text.replace(/\./g, '').replace(/[^0-9]/g, '') }))
+                                            }
+                                            style={styles.input}
+                                        />
+                                    </View>
+
+                                    <View style={styles.editFieldGroup}>
+                                        <Text style={styles.editLabel}>Hoa hồng (VNĐ)</Text>
+                                        <TextInput
+                                            keyboardType="numeric"
+                                            value={formatNumberInput(editForm.tienHoaHong)}
+                                            onChangeText={(text) =>
+                                                setEditForm((prev) => ({ ...prev, tienHoaHong: text.replace(/\./g, '').replace(/[^0-9]/g, '') }))
                                             }
                                             style={styles.input}
                                         />
@@ -393,9 +463,9 @@ const OrderDetailScreen = () => {
                                         <Text style={styles.editLabel}>Phí gom (VNĐ)</Text>
                                         <TextInput
                                             keyboardType="numeric"
-                                            value={String(editForm.tienCongGom)}
+                                            value={formatNumberInput(editForm.tienCongGom)}
                                             onChangeText={(text) =>
-                                                setEditForm((prev) => ({ ...prev, tienCongGom: text.replace(/[^0-9]/g, '') }))
+                                                setEditForm((prev) => ({ ...prev, tienCongGom: text.replace(/\./g, '').replace(/[^0-9]/g, '') }))
                                             }
                                             style={styles.input}
                                         />
@@ -405,9 +475,9 @@ const OrderDetailScreen = () => {
                                         <Text style={styles.editLabel}>Phí đóng hàng (VNĐ)</Text>
                                         <TextInput
                                             keyboardType="numeric"
-                                            value={String(editForm.phiDongHang)}
+                                            value={formatNumberInput(editForm.phiDongHang)}
                                             onChangeText={(text) =>
-                                                setEditForm((prev) => ({ ...prev, phiDongHang: text.replace(/[^0-9]/g, '') }))
+                                                setEditForm((prev) => ({ ...prev, phiDongHang: text.replace(/\./g, '').replace(/[^0-9]/g, '') }))
                                             }
                                             style={styles.input}
                                         />
@@ -482,6 +552,13 @@ const OrderDetailScreen = () => {
                             disabled={isExportingImage || isSaving || !order}
                             variant="outline"
                             style={styles.actionButton}
+                        />
+                        <Button
+                            title="Xóa hóa đơn"
+                            onPress={handleDeleteOrder}
+                            loading={isDeleting}
+                            disabled={isExportingImage || isDeleting || isSaving || isEditing || !order}
+                            style={[styles.actionButton, { backgroundColor: '#ef4444' }]}
                         />
                         <Button
                             title="Xem trước hóa đơn"

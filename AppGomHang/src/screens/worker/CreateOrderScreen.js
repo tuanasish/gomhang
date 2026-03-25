@@ -69,8 +69,7 @@ export default function CreateOrderScreen() {
         setCustomerId('');
         if (val.trim().length >= 1) {
             const filtered = allCustomers.filter(c =>
-                c.name.toLowerCase().includes(val.toLowerCase()) ||
-                (c.phone && c.phone.includes(val))
+                c.name.toLowerCase().includes(val.toLowerCase())
             );
             setFilteredCustomers(filtered);
             setShowCustomerDropdown(true);
@@ -144,7 +143,7 @@ export default function CreateOrderScreen() {
     const phiDongHang = parseMoneyValue(phiDongHangStr);
     const tienHoaHong = parseMoneyValue(tienHoaHongStr);
     const thuePhanTram = thueStr ? parseFloat(thueStr.replace(',', '.')) : 0;
-    const tienThue = !isNaN(thuePhanTram) && !isNaN(tienHang) ? Math.round(tienHang * thuePhanTram / 100) : 0;
+    const tienThue = !isNaN(thuePhanTram) && !isNaN(tienHang) && !isNaN(tienCongGom) ? Math.round((tienHang + tienCongGom) * thuePhanTram / 100) : 0;
 
     const tongTienHoaDon =
         (isNaN(tienHang) ? 0 : tienHang) +

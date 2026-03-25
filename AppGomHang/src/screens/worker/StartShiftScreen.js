@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
@@ -35,8 +35,11 @@ const shadows = {
 };
 
 
+import { useAuth } from '../../context/AuthContext';
+
 const StartShiftScreen = () => {
     const navigation = useNavigation();
+    const { logout } = useAuth();
     const [shift, setShift] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -97,6 +100,24 @@ const StartShiftScreen = () => {
         }
     };
 
+    const handleLogout = () => {
+        Alert.alert(
+            "Đăng xuất",
+            "Bạn có chắc chắn muốn đăng xuất không?",
+            [
+                { text: "Hủy", style: "cancel" },
+                {
+                    text: "Đăng xuất",
+                    style: "destructive",
+                    onPress: async () => {
+                        await logout();
+                        // AuthContext sẽ tự động cập nhật state và đẩy về màn Login
+                    }
+                }
+            ]
+        );
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const [year, month, day] = dateString.split('-');
@@ -135,8 +156,8 @@ const StartShiftScreen = () => {
                         disabled={isStarting}
                         style={{ marginTop: spacing.xl, width: '100%' }}
                     />
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { marginTop: spacing.md }]}>
-                        <Text style={styles.backButtonText}>Quay lại</Text>
+                    <TouchableOpacity onPress={() => handleLogout()} style={[styles.backButton, { marginTop: spacing.md }]}>
+                        <Text style={styles.backButtonText}>Đăng xuất</Text>
                     </TouchableOpacity>
                 </View>
             );
@@ -173,6 +194,9 @@ const StartShiftScreen = () => {
                         disabled={isStarting}
                         style={styles.startButton}
                     />
+                    <TouchableOpacity onPress={() => handleLogout()} style={[styles.backButton, { marginTop: spacing.md, alignSelf: 'center' }]}>
+                        <Text style={styles.backButtonText}>Đăng xuất</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );

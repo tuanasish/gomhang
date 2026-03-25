@@ -34,7 +34,7 @@ export default function WorkerHomeScreen() {
                 // Lấy danh sách hóa đơn của ca này
                 const ordersRes = await getOrdersByShiftAPI(currentShift.id);
                 if (ordersRes && ordersRes.success && ordersRes.data) {
-                    setOrders(ordersRes.data);
+                    setOrders([...ordersRes.data].reverse());
                 } else {
                     setOrders([]);
                 }
@@ -81,7 +81,7 @@ export default function WorkerHomeScreen() {
             <View style={styles.header}>
                 <View style={styles.headerUser}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{userInfo?.name?.charAt(0) || 'W'}</Text>
+                        <Ionicons name="person" size={24} color={theme.colors.primary.dark} />
                     </View>
                     <Text style={styles.userName}>{userInfo?.name || 'Nhân viên'}</Text>
                 </View>
@@ -104,6 +104,10 @@ export default function WorkerHomeScreen() {
                                 <Text style={styles.statValue}>{formatCurrency(shift.tienGiaoCa)}</Text>
                             </Card>
                             <Card style={styles.statCard}>
+                                <Text style={styles.statLabel}>Tổng tiền hàng đã mua</Text>
+                                <Text style={styles.statValue}>{formatCurrency(shift.tongTienHangDaTra || 0)}</Text>
+                            </Card>
+                            <Card style={styles.statCard}>
                                 <Text style={styles.statLabel}>Quỹ còn lại</Text>
                                 <Text style={[
                                     styles.statValue,
@@ -112,12 +116,6 @@ export default function WorkerHomeScreen() {
                                     {formatCurrency(shift.quyConLai || 0)}
                                 </Text>
                             </Card>
-                        </View>
-
-                        {/* Thông tin chi tiết */}
-                        <View style={styles.infoBox}>
-                            <Text style={styles.infoLabel}>Tổng tiền hàng đã trả (đã mua):</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(shift.tongTienHangDaTra || 0)}</Text>
                         </View>
 
                         {/* Action */}
@@ -133,10 +131,14 @@ export default function WorkerHomeScreen() {
                             <Text style={styles.emptyText}>Chưa có hóa đơn nào trong ca này.</Text>
                         ) : (
                             orders.map((order, index) => (
-                                <TouchableOpacity key={order.id} style={styles.orderItem}>
+                                <TouchableOpacity
+                                    key={order.id}
+                                    style={styles.orderItem}
+                                    onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+                                >
                                     <View style={styles.orderLeft}>
                                         <View style={styles.orderIndex}>
-                                            <Text style={styles.orderIndexText}>{index + 1}</Text>
+                                            <Text style={styles.orderIndexText}>{orders.length - index}</Text>
                                         </View>
                                         <View style={styles.orderInfo}>
                                             <Text style={styles.orderCustomer}>Khách: {order.customerName || 'N/A'}</Text>
