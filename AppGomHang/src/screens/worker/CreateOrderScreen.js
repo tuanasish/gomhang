@@ -31,7 +31,6 @@ export default function CreateOrderScreen() {
     // Money state
     const [tienHangStr, setTienHangStr] = useState('');
     const [tienCongGomStr, setTienCongGomStr] = useState('');
-    const [phiDongHangStr, setPhiDongHangStr] = useState('');
     const [tienHoaHongStr, setTienHoaHongStr] = useState('');
     const [thueStr, setThueStr] = useState(''); // Tax percentage
 
@@ -140,7 +139,6 @@ export default function CreateOrderScreen() {
 
     const tienHang = parseMoneyValue(tienHangStr);
     const tienCongGom = parseMoneyValue(tienCongGomStr);
-    const phiDongHang = parseMoneyValue(phiDongHangStr);
     const tienHoaHong = parseMoneyValue(tienHoaHongStr);
     const thuePhanTram = thueStr ? parseFloat(thueStr.replace(',', '.')) : 0;
     const tienThue = !isNaN(thuePhanTram) && !isNaN(tienHang) && !isNaN(tienCongGom) ? Math.round((tienHang + tienCongGom) * thuePhanTram / 100) : 0;
@@ -148,7 +146,6 @@ export default function CreateOrderScreen() {
     const tongTienHoaDon =
         (isNaN(tienHang) ? 0 : tienHang) +
         (isNaN(tienCongGom) ? 0 : tienCongGom) +
-        (isNaN(phiDongHang) ? 0 : phiDongHang) +
         (isNaN(tienHoaHong) ? 0 : tienHoaHong) +
         tienThue;
 
@@ -187,7 +184,6 @@ export default function CreateOrderScreen() {
                 counterName: counterName,
                 tienHang: isNaN(tienHang) ? 0 : tienHang,
                 tienCongGom: isNaN(tienCongGom) ? 0 : tienCongGom,
-                phiDongHang: isNaN(phiDongHang) ? 0 : phiDongHang,
                 tienHoaHong: isNaN(tienHoaHong) ? 0 : tienHoaHong,
                 tienThem: tienThue > 0 ? tienThue : undefined,
                 loaiTienThem: tienThue > 0 ? `Thuế ${thuePhanTram}%` : undefined,
@@ -446,14 +442,6 @@ export default function CreateOrderScreen() {
                             ))}
                         </View>
                     </View>
-
-                    <Input
-                        label="Phí đóng hàng *"
-                        placeholder="0"
-                        keyboardType="numeric"
-                        value={phiDongHangStr}
-                        onChangeText={(t) => setPhiDongHangStr(formatMoneyInput(t))}
-                    />
 
                     <Input
                         label="Tiền hoa hồng (nếu có)"

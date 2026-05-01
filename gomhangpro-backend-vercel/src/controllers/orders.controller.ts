@@ -13,7 +13,7 @@ const parseMoney = (val: any) => {
  */
 export async function getOrdersList(req: Request, res: Response<ApiResponse<Order[]>>): Promise<void> {
   try {
-    const { shiftId, customerId, date, startDate, endDate, status } = req.query;
+    const { shiftId, customerId, date, startDate, endDate, status, offset, limit } = req.query;
     const userId = (req as any).user?.userId;
     const userRole = (req as any).user?.role;
 
@@ -59,6 +59,13 @@ export async function getOrdersList(req: Request, res: Response<ApiResponse<Orde
       // Mặc định loại bỏ đơn đã hủy khỏi danh sách
       query = query.neq('status', 'cancelled');
     }
+
+    const parsedOffset = typeof offset === 'string' ? parseInt(offset, 10) : 0;
+    const parsedLimit = typeof limit === 'string' ? parseInt(limit, 10) : 1000;
+    const safeOffset = Number.isFinite(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+    const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 1000) : 1000;
+
+    query = query.range(safeOffset, safeOffset + safeLimit - 1);
 
     const { data: orders, error } = await query;
 

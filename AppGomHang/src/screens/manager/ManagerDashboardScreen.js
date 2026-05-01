@@ -64,9 +64,19 @@ export default function ManagerDashboardScreen() {
 
     const isToday = selectedDate === today;
 
+    const shiftQueryParams = useMemo(() => {
+        if (filterMode === 'day') {
+            return { date: selectedDate };
+        }
+        if (dateRange) {
+            return { startDate: dateRange.startDate, endDate: dateRange.endDate };
+        }
+        return undefined;
+    }, [filterMode, selectedDate, dateRange]);
+
     // Day mode: fetch by single date
     const { data: ordersResDay, isLoading: ordersLoadingDay, refetch: refetchOrdersDay } = useOrdersByDate(filterMode === 'day' ? selectedDate : null);
-    const { data: shiftsRes, isLoading: shiftsLoading, refetch: refetchShifts } = useShiftsList({ date: filterMode === 'day' ? selectedDate : undefined });
+    const { data: shiftsRes, isLoading: shiftsLoading, refetch: refetchShifts } = useShiftsList(shiftQueryParams);
 
     // Month/Year mode: fetch by date range
     const [rangeOrders, setRangeOrders] = useState(null);
@@ -76,8 +86,29 @@ export default function ManagerDashboardScreen() {
         if (!dateRange) return;
         setRangeLoading(true);
         try {
-            const res = await getOrdersByDateRangeAPI(dateRange.startDate, dateRange.endDate);
-            setRangeOrders(res);
+            const pageSize = 1000;
+            let offset = 0;
+            let allOrders = [];
+
+            while (true) {
+                const res = await getOrdersByDateRangeAPI(dateRange.startDate, dateRange.endDate, {
+                    offset,
+                    limit: pageSize,
+                });
+
+                if (!res?.success) {
+                    setRangeOrders(res || { success: false, data: [] });
+                    return;
+                }
+
+                const batch = Array.isArray(res.data) ? res.data : [];
+                allOrders = allOrders.concat(batch);
+
+                if (batch.length < pageSize) break;
+                offset += pageSize;
+            }
+
+            setRangeOrders({ success: true, data: allOrders });
         } catch (e) {
             setRangeOrders({ success: true, data: [] });
         } finally {
@@ -99,12 +130,10 @@ export default function ManagerDashboardScreen() {
     // Fetch phí đóng gửi (only for day mode)
     const [totalPhiDongGui, setTotalPhiDongGui] = useState(0);
     const fetchDailyFees = useCallback(async () => {
-        if (filterMode !== 'day') {
-            setTotalPhiDongGui(0);
-            return;
-        }
         try {
-            const res = await getAllCustomerDailyFeesAPI(selectedDate);
+            const res = filterMode === 'day'
+                ? await getAllCustomerDailyFeesAPI(selectedDate)
+                : await getAllCustomerDailyFeesAPI(null, dateRange?.startDate, dateRange?.endDate);
             if (res.success && res.data) {
                 const total = res.data.reduce((sum, item) => sum + (Number(item.phiDongGui) || 0), 0);
                 setTotalPhiDongGui(total);
@@ -114,7 +143,7 @@ export default function ManagerDashboardScreen() {
         } catch (e) {
             setTotalPhiDongGui(0);
         }
-    }, [selectedDate, filterMode]);
+    }, [selectedDate, filterMode, dateRange]);
     useEffect(() => { fetchDailyFees(); }, [fetchDailyFees]);
 
     // Tính thống kê
@@ -259,7 +288,9 @@ export default function ManagerDashboardScreen() {
 
                 {/* Start Stats Block */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Thống kê theo ngày</Text>
+                    <Text style={styles.cardTitle}>
+                        {filterMode === 'day' ? 'Thống kê theo ngày' : filterMode === 'month' ? 'Thống kê theo tháng' : 'Thống kê theo năm'}
+                    </Text>
 
                     <View style={styles.statRow}>
                         <Text style={styles.statLabel}>Đã giao cho nhân viên</Text>

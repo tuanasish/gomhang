@@ -76,21 +76,34 @@ export async function saveCustomerDailyFee(req: Request, res: Response): Promise
  */
 export async function getCustomerDailyFees(req: Request, res: Response): Promise<void> {
     try {
-        const { date } = req.query;
+        const { date, startDate, endDate } = req.query;
 
-        if (!date || typeof date !== 'string') {
+        const hasSingleDate = typeof date === 'string' && date.length > 0;
+        const hasDateRange = typeof startDate === 'string' && startDate.length > 0;
+
+        if (!hasSingleDate && !hasDateRange) {
             res.status(400).json({
                 success: false,
-                error: 'Tham số date là bắt buộc (YYYY-MM-DD)',
+                error: 'Cần truyền date hoặc startDate (YYYY-MM-DD)',
             });
             return;
         }
 
         // 1. Lấy danh sách phí đóng gửi theo ngày
-        const { data, error } = await supabase
+        let feesQuery = supabase
             .from('customer_daily_fees')
-            .select('*, customers(name)')
-            .eq('date', date);
+            .select('*, customers(name)');
+
+        if (hasSingleDate) {
+            feesQuery = feesQuery.eq('date', date as string);
+        } else {
+            feesQuery = feesQuery.gte('date', startDate as string);
+            if (typeof endDate === 'string' && endDate.length > 0) {
+                feesQuery = feesQuery.lte('date', endDate);
+            }
+        }
+
+        const { data, error } = await feesQuery;
 
         if (error) {
             console.error('Get customer daily fees error:', error);
@@ -102,14 +115,23 @@ export async function getCustomerDailyFees(req: Request, res: Response): Promise
         }
 
         // 2. Lấy danh sách customer_id có đơn hàng active trong ngày
-        const startDate = `${date}T00:00:00+07:00`;
-        const endDate = `${date}T23:59:59+07:00`;
-        const { data: activeOrders, error: ordersError } = await supabase
+        let ordersQuery = supabase
             .from('orders')
             .select('customer_id')
-            .neq('status', 'cancelled')
-            .gte('created_at', startDate)
-            .lte('created_at', endDate);
+            .neq('status', 'cancelled');
+
+        if (hasSingleDate) {
+            const dayStart = `${date}T00:00:00+07:00`;
+            const dayEnd = `${date}T23:59:59+07:00`;
+            ordersQuery = ordersQuery.gte('created_at', dayStart).lte('created_at', dayEnd);
+        } else {
+            ordersQuery = ordersQuery.gte('created_at', `${startDate}T00:00:00+07:00`);
+            if (typeof endDate === 'string' && endDate.length > 0) {
+                ordersQuery = ordersQuery.lte('created_at', `${endDate}T23:59:59+07:00`);
+            }
+        }
+
+        const { data: activeOrders, error: ordersError } = await ordersQuery;
 
         if (ordersError) {
             console.error('Get active orders error:', ordersError);

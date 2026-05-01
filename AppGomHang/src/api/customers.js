@@ -74,7 +74,12 @@ export const getCustomerDailyFeeAPI = async (customerId, date) => {
 /**
  * Lấy tất cả phí đóng gửi theo ngày (cho Dashboard)
  */
-export const getAllCustomerDailyFeesAPI = async (date) => {
-    const response = await apiClient.get('/customer-fees', { params: { date } });
+export const getAllCustomerDailyFeesAPI = async (date, startDate, endDate) => {
+    const params = {};
+    if (date) params.date = date;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
+    const response = await apiClient.get('/customer-fees', { params });
     return response.data;
 };

@@ -23,7 +23,7 @@ export async function getShiftsList(req: Request, res: Response<ApiResponse<Shif
     // Auto-reset các ca đã hết hạn trước khi lấy danh sách
     await autoResetExpiredShifts();
 
-    const { staffId, date, status } = req.query;
+    const { staffId, date, startDate, endDate, status } = req.query;
 
     let query = supabase
       .from('shifts')
@@ -41,6 +41,11 @@ export async function getShiftsList(req: Request, res: Response<ApiResponse<Shif
 
     if (date && typeof date === 'string') {
       query = query.eq('date', date);
+    } else if (startDate && typeof startDate === 'string') {
+      query = query.gte('date', startDate);
+      if (endDate && typeof endDate === 'string') {
+        query = query.lte('date', endDate);
+      }
     }
 
     if (status && typeof status === 'string') {
