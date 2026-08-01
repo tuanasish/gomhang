@@ -21,6 +21,7 @@
       }
     },
     "production": {
+      "environment": "production",
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://gomhangprobackend.vercel.app/api"
@@ -34,6 +35,12 @@
         "ascApiKeyPath": "../AuthKey_K8V7UPC335.p8",
         "ascApiKeyIssuerId": "6a725f74-1d2b-4452-b564-24f42f0ac1af",
         "ascApiKeyId": "K8V7UPC335"
+      }
+    },
+    "automated": {
+      "ios": {
+        "ascAppId": "6760104438",
+        "bundleIdentifier": "com.gomhangpro.internalapp"
       }
     }
   }
