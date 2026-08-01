@@ -4,6 +4,7 @@ on:
   workflow_dispatch: {}
   schedule:
     # EAS cron uses GMT. 02:00 GMT is 09:00 in Vietnam.
+    # Renew every two months, comfortably before TestFlight's 90-day expiry.
     - cron: "0 2 1 */2 *"
 
 jobs:
