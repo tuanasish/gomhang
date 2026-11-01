@@ -26,8 +26,8 @@ import { getAllCustomerDailyFeesAPI } from '../../api/customers';
 export default function AdminCustomersScreen({ navigation }) {
     const { userInfo } = useAuth();
 
-    // Filter mode: 'day' | 'month' | 'year'
-    const [filterMode, setFilterMode] = useState('day');
+    // Filter mode: 'month' | 'year'
+    const [filterMode, setFilterMode] = useState('month');
     const today = getLocalDateString(new Date());
     const [selectedDate, setSelectedDate] = useState(today);
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -303,14 +303,8 @@ export default function AdminCustomersScreen({ navigation }) {
 
     const renderDateSelector = () => (
         <View style={styles.filterSection}>
-            {/* Filter mode selector */}
+            {/* Filter mode selector: Tháng | Năm */}
             <View style={styles.filterModeTabs}>
-                <TouchableOpacity
-                    style={[styles.modeTab, filterMode === 'day' && styles.modeTabActive]}
-                    onPress={() => setFilterMode('day')}
-                >
-                    <Text style={[styles.modeTabText, filterMode === 'day' && styles.modeTabTextActive]}>Ngày</Text>
-                </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.modeTab, filterMode === 'month' && styles.modeTabActive]}
                     onPress={() => setFilterMode('month')}
@@ -331,32 +325,15 @@ export default function AdminCustomersScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={20} color="#1F2937" />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.dateDisplayBtn}
-                    onPress={() => {
-                        if (filterMode === 'day') setShowDatePicker(true);
-                    }}
-                >
+                <View style={styles.dateDisplayBtn}>
                     <Ionicons name="calendar-outline" size={17} color="#2563EB" style={{ marginRight: 6 }} />
                     <Text style={styles.dateDisplayText}>{formatDisplayDate(selectedDate)}</Text>
-                    {filterMode === 'day' && (
-                        <Ionicons name="caret-down" size={12} color="#6B7280" style={{ marginLeft: 4 }} />
-                    )}
-                </TouchableOpacity>
+                </View>
 
                 <TouchableOpacity style={styles.dateNavBtn} onPress={() => changeDate(1)}>
                     <Ionicons name="chevron-forward" size={20} color="#1F2937" />
                 </TouchableOpacity>
             </View>
-
-            {showDatePicker && (
-                <DateTimePicker
-                    value={new Date(selectedDate + 'T00:00:00')}
-                    mode="date"
-                    display="default"
-                    onChange={handleDatePicked}
-                />
-            )}
         </View>
     );
 
@@ -415,16 +392,8 @@ export default function AdminCustomersScreen({ navigation }) {
                     />
                 </TouchableOpacity>
 
-                {/* Action buttons row */}
-                <View style={styles.actionRow}>
-                    <TouchableOpacity
-                        style={styles.detailBtn}
-                        onPress={() => navigation.navigate('CustomerDetail', { customerId: item.id })}
-                    >
-                        <Ionicons name="document-text-outline" size={15} color="#2563EB" style={{ marginRight: 4 }} />
-                        <Text style={styles.detailBtnText}>Làm bill & Chi tiết</Text>
-                    </TouchableOpacity>
-
+                {/* Action button: Xem đơn */}
+                <View style={[styles.actionRow, { justifyContent: 'flex-end' }]}>
                     <TouchableOpacity
                         style={styles.expandToggleBtn}
                         onPress={() => toggleExpand(item.id)}
@@ -432,6 +401,12 @@ export default function AdminCustomersScreen({ navigation }) {
                         <Text style={styles.expandToggleText}>
                             {isExpanded ? 'Thu gọn đơn' : `Xem ${item.orderCount} đơn`}
                         </Text>
+                        <Ionicons
+                            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                            size={16}
+                            color="#2563EB"
+                            style={{ marginLeft: 4 }}
+                        />
                     </TouchableOpacity>
                 </View>
 

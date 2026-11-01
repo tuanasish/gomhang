@@ -31,8 +31,8 @@ import { useOrdersByDate } from '../../hooks/queries/useOrders';
 import { getOrdersByDateRangeAPI } from '../../api/orders';
 
 export default function AdminAllCustomersScreen({ navigation }) {
-    // Filter mode: 'day' | 'month' | 'year'
-    const [filterMode, setFilterMode] = useState('day');
+    // Filter mode: 'month' | 'year'
+    const [filterMode, setFilterMode] = useState('month');
     const today = getLocalDateString(new Date());
     const [selectedDate, setSelectedDate] = useState(today);
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -386,14 +386,8 @@ export default function AdminAllCustomersScreen({ navigation }) {
 
     const renderDateSelector = () => (
         <View style={styles.filterSection}>
-            {/* Filter mode tabs */}
+            {/* Filter mode selector: Tháng | Năm */}
             <View style={styles.filterModeTabs}>
-                <TouchableOpacity
-                    style={[styles.modeTab, filterMode === 'day' && styles.modeTabActive]}
-                    onPress={() => setFilterMode('day')}
-                >
-                    <Text style={[styles.modeTabText, filterMode === 'day' && styles.modeTabTextActive]}>Ngày</Text>
-                </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.modeTab, filterMode === 'month' && styles.modeTabActive]}
                     onPress={() => setFilterMode('month')}
@@ -414,55 +408,15 @@ export default function AdminAllCustomersScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={20} color="#1F2937" />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.dateDisplayBtn}
-                    onPress={() => {
-                        if (filterMode === 'day') setShowDatePicker(true);
-                    }}
-                >
+                <View style={styles.dateDisplayBtn}>
                     <Ionicons name="calendar-outline" size={17} color="#2563EB" style={{ marginRight: 6 }} />
                     <Text style={styles.dateDisplayText}>{formatDisplayDate(selectedDate)}</Text>
-                    {filterMode === 'day' && (
-                        <Ionicons name="caret-down" size={12} color="#6B7280" style={{ marginLeft: 4 }} />
-                    )}
-                </TouchableOpacity>
+                </View>
 
                 <TouchableOpacity style={styles.dateNavBtn} onPress={() => changeDate(1)}>
                     <Ionicons name="chevron-forward" size={20} color="#1F2937" />
                 </TouchableOpacity>
             </View>
-
-            {showDatePicker && (
-                Platform.OS === 'web' ? (
-                    <View style={{ marginTop: 8, alignItems: 'center' }}>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => {
-                                setShowDatePicker(false);
-                                if (e.target.value) {
-                                    setSelectedDate(e.target.value);
-                                }
-                            }}
-                            style={{
-                                padding: '8px 12px',
-                                fontSize: '15px',
-                                borderRadius: '8px',
-                                border: '1px solid #2563EB',
-                                outline: 'none',
-                                cursor: 'pointer'
-                            }}
-                        />
-                    </View>
-                ) : (
-                    <DateTimePicker
-                        value={new Date(selectedDate + 'T00:00:00')}
-                        mode="date"
-                        display="default"
-                        onChange={handleDatePicked}
-                    />
-                )
-            )}
         </View>
     );
 
