@@ -5,6 +5,8 @@ import AdminCountersScreen from '../screens/manager/AdminCountersScreen';
 import ProfileScreen from '../screens/common/ProfileScreen';
 import SettingsMenuScreen from '../screens/manager/SettingsMenuScreen';
 import AdminAllCustomersScreen from '../screens/manager/AdminAllCustomersScreen';
+import CustomerDetailScreen from '../screens/manager/CustomerDetailScreen';
+import OrderDetailScreen from '../screens/worker/OrderDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -19,6 +21,8 @@ export default function SettingsNavigator() {
             <Stack.Screen name="AdminStaff" component={AdminStaffScreen} />
             <Stack.Screen name="AdminCounters" component={AdminCountersScreen} />
             <Stack.Screen name="AdminAllCustomers" component={AdminAllCustomersScreen} />
+            <Stack.Screen name="CustomerDetail" component={CustomerDetailScreen} />
+            <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
     );
