@@ -1,30 +1,28 @@
 {
-    "updated_at": "2026-11-01T19:16:00+07:00",
+    "updated_at": "2026-11-01T19:45:00+07:00",
     "working_on": {
-        "feature": "Customer Debt Auto-fill & Date-Range Ranked Orders List",
+        "feature": "Shift & Dashboard Sync + Android Release Build",
         "task": "EAS Android APK build running in cloud",
         "status": "in_progress",
         "files": [
-            "AppGomHang/android/settings.gradle",
-            "AppGomHang/src/screens/manager/AdminCustomersScreen.js",
-            "AppGomHang/src/screens/manager/CustomerDetailScreen.js",
-            "AppGomHang/src/api/customers.js",
-            "gomhangpro-backend-vercel/src/controllers/customer-fees.controller.ts",
-            "gomhangpro-backend-vercel/src/routes/customer-fees.routes.ts"
+            "gomhangpro-backend-vercel/src/controllers/shifts.controller.ts",
+            "gomhangpro-backend-vercel/src/types/index.ts",
+            ".gitignore",
+            "AppGomHang/patches/"
         ],
         "blockers": [],
-        "notes": "EAS build running: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/ec4b4f5c-4ae7-4d87-86c6-58394365b136"
+        "notes": "EAS build running: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/1847718e-dae9-442d-8c58-344e1367ba47"
     },
     "pending_tasks": [
         {
             "task": "Tải và cài đặt APK mới để test tính năng nợ cũ và danh sách khách hàng",
             "priority": "high",
-            "notes": "Link tải trên EAS: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/ec4b4f5c-4ae7-4d87-86c6-58394365b136"
+            "notes": "Link tải trên EAS: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/1847718e-dae9-442d-8c58-344e1367ba47"
         },
         {
             "task": "Deploy backend lên Vercel",
             "priority": "high",
-            "notes": "Chạy npx vercel login sau đó cd gomhangpro-backend-vercel; npx vercel --prod --yes"
+            "notes": "Code đã được push lên main trên github (tự deploy nếu có Vercel GitHub integration) hoặc chạy npx vercel --prod"
         },
         {
             "task": "Chờ duyệt tài khoản Apple Developer mới để submit TestFlight",
@@ -36,18 +34,21 @@
         {
             "timestamp": "2026-11-01",
             "type": "fix",
-            "description": "Sửa rootProject.name trong settings.gradle về gomhangpro-app (ASCII) để Gradle không bị lỗi variant matching",
+            "description": "Tự động tính tổng tiền đã trả ca làm việc trực tiếp từ các đơn hàng thực tế trong shifts.controller.ts và đồng bộ 209 ca cũ trong Supabase",
             "files": [
-                "AppGomHang/android/settings.gradle"
+                "gomhangpro-backend-vercel/src/controllers/shifts.controller.ts",
+                "gomhangpro-backend-vercel/src/types/index.ts"
             ]
         },
         {
             "timestamp": "2026-11-01",
-            "type": "feature",
-            "description": "Tự động tra cứu và điền nợ cũ của ngày hôm trước trong CustomerDetailScreen",
+            "type": "fix",
+            "description": "Xóa theo dõi git của các file gradle cache trong android/.gradle và android/build, thêm patch-package và update .gitignore",
             "files": [
-                "AppGomHang/src/screens/manager/CustomerDetailScreen.js",
-                "AppGomHang/src/api/customers.js",
+                ".gitignore",
+                "AppGomHang/patches/"
+            ]
+        },
                 "gomhangpro-backend-vercel/src/controllers/customer-fees.controller.ts",
                 "gomhangpro-backend-vercel/src/routes/customer-fees.routes.ts"
             ]
