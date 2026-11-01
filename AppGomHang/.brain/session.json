@@ -1,71 +1,62 @@
 {
-    "updated_at": "2026-11-01T18:45:00+07:00",
+    "updated_at": "2026-11-01T19:07:00+07:00",
     "working_on": {
-        "feature": "Migrate to New Apple Developer Account",
-        "task": "Waiting for Apple to approve new Developer Account enrollment (~2 business days)",
+        "feature": "Customer Debt Auto-fill & Date-Range Ranked Orders List",
+        "task": "EAS Android APK build running in cloud",
         "status": "in_progress",
         "files": [
-            "app.json",
-            "eas.json",
-            "src/screens/worker/CreateOrderScreen.js"
+            "AppGomHang/src/screens/manager/AdminCustomersScreen.js",
+            "AppGomHang/src/screens/manager/CustomerDetailScreen.js",
+            "AppGomHang/src/api/customers.js",
+            "gomhangpro-backend-vercel/src/controllers/customer-fees.controller.ts",
+            "gomhangpro-backend-vercel/src/routes/customer-fees.routes.ts"
         ],
-        "blockers": [
-            "Apple is processing the enrollment for the new Individual Apple Developer account"
-        ],
-        "notes": "Changed bundleIdentifier to com.gomhangpro.tuanasish. Cleaned debug console.logs. Ready to configure new credentials and trigger EAS build once Apple activates account."
+        "blockers": [],
+        "notes": "EAS build running: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/185705b9-0434-4c02-8f0e-f3b39e20a3f8"
     },
     "pending_tasks": [
         {
-            "task": "Tạo App Store Connect API Key (.p8) trên tài khoản mới",
+            "task": "Tải và cài đặt APK mới để test tính năng nợ cũ và danh sách khách hàng",
             "priority": "high",
-            "notes": "Tạo key Admin trên Users and Access -> Integrations, tải file .p8, lấy Key ID & Issuer ID."
+            "notes": "Link tải trên EAS: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/185705b9-0434-4c02-8f0e-f3b39e20a3f8"
         },
         {
-            "task": "Cấu hình lại EAS credentials cho iOS",
+            "task": "Deploy backend lên Vercel",
             "priority": "high",
-            "notes": "Chạy npx eas credentials để liên kết với Apple Team mới và tạo Distribution Certificate mới."
+            "notes": "Chạy npx vercel login sau đó cd gomhangpro-backend-vercel; npx vercel --prod --yes"
         },
         {
-            "task": "Chạy EAS build & Submit lên TestFlight tài khoản mới",
-            "priority": "high",
-            "notes": "npx eas build --platform ios --profile production --auto-submit"
-        },
-        {
-            "task": "Tạo Public Link TestFlight cho nhân viên",
+            "task": "Chờ duyệt tài khoản Apple Developer mới để submit TestFlight",
             "priority": "medium",
-            "notes": "Tạo nhóm External Testing tên Testing, submit Beta App Review để lấy Public Link."
+            "notes": "Đã đổi Bundle ID sang com.gomhangpro.tuanasish và buildNumber=1"
         }
     ],
     "recent_changes": [
         {
             "timestamp": "2026-11-01",
-            "type": "config",
-            "description": "Đổi Bundle Identifier sang com.gomhangpro.tuanasish và reset buildNumber=1 trong app.json và eas.json",
+            "type": "feature",
+            "description": "Tự động tra cứu và điền nợ cũ của ngày hôm trước trong CustomerDetailScreen",
             "files": [
-                "app.json",
-                "eas.json"
+                "AppGomHang/src/screens/manager/CustomerDetailScreen.js",
+                "AppGomHang/src/api/customers.js",
+                "gomhangpro-backend-vercel/src/controllers/customer-fees.controller.ts",
+                "gomhangpro-backend-vercel/src/routes/customer-fees.routes.ts"
             ]
         },
         {
             "timestamp": "2026-11-01",
-            "type": "cleanup",
-            "description": "Xóa debug console.log trong CreateOrderScreen.js",
+            "type": "feature",
+            "description": "Thống kê đơn khách theo Ngày - Tháng - Năm, sắp xếp từ nhiều đơn nhất đến ít đơn nhất trong AdminCustomersScreen",
             "files": [
-                "src/screens/worker/CreateOrderScreen.js"
+                "AppGomHang/src/screens/manager/AdminCustomersScreen.js"
             ]
         }
     ],
-    "errors_encountered": [
-        {
-            "error": "Tài khoản Apple cũ không có quyền Account Holder nên không đồng ý được điều khoản mới, không submit TestFlight được",
-            "solution": "Đăng ký tài khoản Apple Developer Individual mới và chuyển Bundle ID sang com.gomhangpro.tuanasish.",
-            "resolved": true
-        }
-    ],
+    "errors_encountered": [],
     "decisions_made": [
         {
-            "decision": "Đổi Bundle ID sang com.gomhangpro.tuanasish",
-            "reason": "Bundle ID cũ bị kẹt ở tài khoản cũ không transfer được, cần ID mới cho tài khoản Apple mới."
+            "decision": "Lấy nợ hôm trước từ tổng hóa đơn (đơn + phí đóng gửi) của ngày gần nhất trước đó",
+            "reason": "Phù hợp chính xác với luồng kinh doanh thực tế của shop gom hàng Ninh Hiệp."
         }
     ]
 }
