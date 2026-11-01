@@ -498,16 +498,8 @@ export default function AdminAllCustomersScreen({ navigation }) {
                 </View>
 
                 {/* Footer Action Buttons */}
-                <View style={styles.cardFooter}>
-                    <TouchableOpacity
-                        style={styles.detailBtn}
-                        onPress={() => navigation.navigate('CustomerDetail', { customerId: item.id })}
-                    >
-                        <Ionicons name="document-text-outline" size={15} color="#2563EB" style={{ marginRight: 4 }} />
-                        <Text style={styles.detailBtnText}>Làm bill & Chi tiết</Text>
-                    </TouchableOpacity>
-
-                    {hasOrders ? (
+                {hasOrders && (
+                    <View style={[styles.cardFooter, { justifyContent: 'flex-end' }]}>
                         <TouchableOpacity
                             style={styles.expandToggleBtn}
                             onPress={() => toggleExpand(item.id)}
@@ -522,8 +514,8 @@ export default function AdminAllCustomersScreen({ navigation }) {
                                 style={{ marginLeft: 4 }}
                             />
                         </TouchableOpacity>
-                    ) : null}
-                </View>
+                    </View>
+                )}
 
                 {/* Accordion Sub-list: Giống đơn nhân viên đánh */}
                 {isExpanded && hasOrders && (
