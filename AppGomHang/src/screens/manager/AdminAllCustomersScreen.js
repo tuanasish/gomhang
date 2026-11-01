@@ -433,12 +433,35 @@ export default function AdminAllCustomersScreen({ navigation }) {
             </View>
 
             {showDatePicker && (
-                <DateTimePicker
-                    value={new Date(selectedDate + 'T00:00:00')}
-                    mode="date"
-                    display="default"
-                    onChange={handleDatePicked}
-                />
+                Platform.OS === 'web' ? (
+                    <View style={{ marginTop: 8, alignItems: 'center' }}>
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => {
+                                setShowDatePicker(false);
+                                if (e.target.value) {
+                                    setSelectedDate(e.target.value);
+                                }
+                            }}
+                            style={{
+                                padding: '8px 12px',
+                                fontSize: '15px',
+                                borderRadius: '8px',
+                                border: '1px solid #2563EB',
+                                outline: 'none',
+                                cursor: 'pointer'
+                            }}
+                        />
+                    </View>
+                ) : (
+                    <DateTimePicker
+                        value={new Date(selectedDate + 'T00:00:00')}
+                        mode="date"
+                        display="default"
+                        onChange={handleDatePicked}
+                    />
+                )
             )}
         </View>
     );
@@ -469,33 +492,36 @@ export default function AdminAllCustomersScreen({ navigation }) {
 
                     {/* Customer Info */}
                     <View style={styles.customerInfo}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                            <Text style={styles.customerName}>{item.name}</Text>
-                        </View>
+                        <Text style={styles.customerName}>{item.name}</Text>
 
-                        {/* Order count & total highlight */}
-                        <View style={styles.statsRow}>
-                            <View style={[styles.orderCountBadge, hasOrders ? styles.orderCountBadgeActive : styles.orderCountBadgeZero]}>
-                                <Ionicons
-                                    name={hasOrders ? "cube" : "cube-outline"}
-                                    size={13}
-                                    color={hasOrders ? "#2563EB" : "#9CA3AF"}
-                                    style={{ marginRight: 4 }}
-                                />
-                                <Text style={[styles.orderCountText, hasOrders ? styles.orderCountTextActive : styles.orderCountTextZero]}>
-                                    {item.orderCount} đơn trong {filterMode === 'day' ? 'ngày' : filterMode === 'month' ? 'tháng' : 'năm'}
+                        {/* 3 dòng theo đúng yêu cầu */}
+                        <View style={styles.threeLinesContainer}>
+                            <Text style={styles.infoLine}>
+                                <Text style={styles.infoLineLabel}>Tổng số đơn : </Text>
+                                <Text style={[styles.infoLineValue, hasOrders ? styles.infoLineOrderActive : null]}>
+                                    {item.orderCount} đơn{hasOrders ? ` (${formatCurrency(item.totalAmount)})` : ''}
                                 </Text>
-                            </View>
-                            {hasOrders ? (
-                                <Text style={styles.totalAmountText}>{formatCurrency(item.totalAmount)}</Text>
+                            </Text>
+
+                            <Text style={styles.infoLine}>
+                                <Text style={styles.infoLineLabel}>Thuế mặc định : </Text>
+                                <Text style={styles.infoLineValue}>{item.address ? `${item.address}%` : '0%'}</Text>
+                            </Text>
+
+                            <Text style={styles.infoLine}>
+                                <Text style={styles.infoLineLabel}>Phí gom mặc định : </Text>
+                                <Text style={styles.infoLineValue}>
+                                    {item.defaultTienCongGom ? `${Number(item.defaultTienCongGom).toLocaleString('vi-VN')}đ` : '0đ'}
+                                </Text>
+                            </Text>
+
+                            {item.phone ? (
+                                <Text style={[styles.infoLine, { marginTop: 2 }]}>
+                                    <Text style={[styles.infoLineLabel, { color: '#9CA3AF' }]}>SĐT : </Text>
+                                    <Text style={[styles.infoLineValue, { color: '#6B7280' }]}>{item.phone}</Text>
+                                </Text>
                             ) : null}
                         </View>
-
-                        {/* Default Settings & Phone */}
-                        <Text style={styles.customerContact}>
-                            Thuế: {item.address || '0'}% | Phí gom: {item.defaultTienCongGom ? `${item.defaultTienCongGom.toLocaleString('vi-VN')}đ` : '0đ'}
-                            {item.phone ? ` | SĐT: ${item.phone}` : ''}
-                        </Text>
                     </View>
 
                     {/* Action buttons (Edit & Delete) */}
@@ -1006,6 +1032,26 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#111827',
         marginBottom: 4,
+    },
+    threeLinesContainer: {
+        marginTop: 4,
+    },
+    infoLine: {
+        fontSize: 13,
+        lineHeight: 20,
+        marginBottom: 2,
+    },
+    infoLineLabel: {
+        color: '#4B5563',
+        fontWeight: '500',
+    },
+    infoLineValue: {
+        color: '#111827',
+        fontWeight: '600',
+    },
+    infoLineOrderActive: {
+        color: '#2563EB',
+        fontWeight: '700',
     },
     statsRow: {
         flexDirection: 'row',
