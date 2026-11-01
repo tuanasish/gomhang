@@ -577,7 +577,7 @@ const OrderDetailScreen = () => {
                             collapsable={false}
                         >
                             <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Gom Hàng Ninh Hiệp</Text>
+                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Quân Gom Ninh Hiệp</Text>
                                 <Text style={{ fontSize: 14, color: '#000', marginTop: 4 }}>Ninh Hiệp, Gia Lâm, Hà Nội - 0922238683</Text>
                                 <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#2563eb', marginTop: 15 }}>HÓA ĐƠN BÁN HÀNG</Text>
                             </View>
@@ -679,7 +679,7 @@ const OrderDetailScreen = () => {
                     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
                         <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20, ...shadows.md }}>
                             <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Gom Hàng Ninh Hiệp</Text>
+                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Quân Gom Ninh Hiệp</Text>
                                 <Text style={{ fontSize: 14, color: '#000', marginTop: 4 }}>Ninh Hiệp, Gia Lâm, Hà Nội - 0922238683</Text>
                                 <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#2563eb', marginTop: 15 }}>HÓA ĐƠN BÁN HÀNG</Text>
                             </View>

@@ -61,7 +61,7 @@ const LoginScreen = () => {
             style={{ flex: 1, justifyContent: 'center' }}
         >
             <View style={styles.formContainer}>
-                <Text style={styles.title}>Gom Hàng Ninh Hiệp</Text>
+                <Text style={styles.title}>Quân Gom Ninh Hiệp</Text>
                 <Text style={styles.subtitle}>Ứng dụng nội bộ</Text>
 
                 <TextInput
