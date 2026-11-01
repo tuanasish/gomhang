@@ -1,0 +1,16 @@
+diff --git a/node_modules/expo-modules-core/android/CMakeLists.txt b/node_modules/expo-modules-core/android/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/node_modules/expo-modules-core/android/CMakeLists.txt
++++ b/node_modules/expo-modules-core/android/CMakeLists.txt
+@@ -122,10 +122,11 @@ target_link_libraries(
+   ${PACKAGE_NAME}
+   CommonSettings
+   ${LOG_LIB}
++  c++_shared
+   fbjni::fbjni
+   ReactAndroid::jsi
+   android
+   ${JSEXECUTOR_LIB}
+   ${NEW_ARCHITECTURE_DEPENDENCIES}
+ )
+ 

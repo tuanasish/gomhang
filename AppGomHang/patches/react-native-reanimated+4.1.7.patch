@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-reanimated/android/CMakeLists.txt b/node_modules/react-native-reanimated/android/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/node_modules/react-native-reanimated/android/CMakeLists.txt
++++ b/node_modules/react-native-reanimated/android/CMakeLists.txt
+@@ -92,8 +92,8 @@ set_target_properties(reanimated PROPERTIES LINKER_LANGUAGE CXX)
+ # remove dead code sections
+ set_target_properties(reanimated PROPERTIES LINK_FLAGS "-Wl,--gc-sections")
+ 
+-target_link_libraries(reanimated log ReactAndroid::jsi fbjni::fbjni android
+-                      worklets)
++target_link_libraries(reanimated log c++_shared ReactAndroid::jsi fbjni::fbjni android
++                      worklets)
+ 
+ if(ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+   target_link_libraries(reanimated ReactAndroid::reactnative)

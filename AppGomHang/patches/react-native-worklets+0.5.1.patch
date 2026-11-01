@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-worklets/android/CMakeLists.txt b/node_modules/react-native-worklets/android/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/node_modules/react-native-worklets/android/CMakeLists.txt
++++ b/node_modules/react-native-worklets/android/CMakeLists.txt
+@@ -94,7 +94,7 @@ endif()
+ # build shared lib
+ set_target_properties(worklets PROPERTIES LINKER_LANGUAGE CXX)
+ 
+-target_link_libraries(worklets log ReactAndroid::jsi fbjni::fbjni)
++target_link_libraries(worklets log c++_shared ReactAndroid::jsi fbjni::fbjni)
+ 
+ if(ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+   target_link_libraries(worklets ReactAndroid::reactnative)
