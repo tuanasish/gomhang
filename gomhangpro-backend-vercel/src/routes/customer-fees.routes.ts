@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { saveCustomerDailyFee, getCustomerDailyFees, getCustomerDailyFee } from '../controllers/customer-fees.controller.js';
+import {
+    saveCustomerDailyFee,
+    getCustomerDailyFees,
+    getCustomerDailyFee,
+    getPreviousCustomerBill
+} from '../controllers/customer-fees.controller.js';
 import { authenticate, authorize } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -17,6 +22,13 @@ router.post('/', authenticate, authorize('manager', 'admin'), saveCustomerDailyF
  * @access  Private (Manager/Admin)
  */
 router.get('/', authenticate, authorize('manager', 'admin'), getCustomerDailyFees);
+
+/**
+ * @route   GET /api/customer-fees/previous-bill/:customerId
+ * @desc    Lấy hóa đơn của ngày gần nhất trước ngày chỉ định (tính nợ cũ)
+ * @access  Private (Manager/Admin)
+ */
+router.get('/previous-bill/:customerId', authenticate, authorize('manager', 'admin'), getPreviousCustomerBill);
 
 /**
  * @route   GET /api/customer-fees/:customerId

@@ -2,43 +2,35 @@
 📋 HANDOVER DOCUMENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📍 Đang làm: Fix Order Save + Customer Search + Vercel Deploy
-🔢 Đến bước: Đã xong — đang chờ APK build
+📍 Đang làm: Chuyển app sang tài khoản Apple Developer mới (TestFlight)
+🔢 Đến bước: Đang chờ Apple kích hoạt tài khoản mới (thông báo ~2 ngày)
 
 ✅ ĐÃ XONG:
-   - Customer search: Đổi từ API search → local filtering ✓
-   - Order save tienHang=0: Fix validation backend + frontend ✓
-   - Money fields NaN: Tất cả trường tiền NaN → 0 trước khi gửi API ✓
-   - Vercel deploy: Link đúng project gomhangpro_backend, deploy thành công ✓
-   - Backend tại gomhangprobackend.vercel.app đã có code mới ✓
-   - brain.json + session.json đã cập nhật ✓
+   - Đăng ký Apple Developer Program diện Individual / Sole Proprietor ✓
+   - Cập nhật Bundle Identifier thành: com.gomhangpro.tuanasish ✓
+   - Reset buildNumber: 1 cho iOS trong app.json ✓
+   - Cập nhật eas.json (xoá ascAppId cũ, đổi bundleIdentifier mới) ✓
+   - Xoá debug console.log trong CreateOrderScreen.js ✓
+   - session.json đã cập nhật ✓
 
-⏳ CÒN LẠI:
-   - APK build đang chạy trên EAS cloud (Free tier queue ~110 min)
-   - Test save order trên APK mới
-   - Xóa debug console.log trong CreateOrderScreen.js
-   - Performance optimization (plans/ đã lên)
-   - Build IPA iOS cho TestFlight
+⏳ CÒN LẠI (Thực hiện ngay khi tài khoản Apple được kích hoạt):
+   1. Vào App Store Connect -> Users and Access -> Integrations -> App Store Connect API:
+      - Tạo Key mới (Role Admin)
+      - Tải file .p8 lưu vào thư mục dự án
+      - Lấy Key ID và Issuer ID điền vào eas.json
+   2. Chạy `npx eas credentials` để xoá credentials cũ của Apple Team cũ và cấp mới cho Team mới.
+   3. Chạy `npx eas build --platform ios --profile production --auto-submit` để đẩy lên TestFlight.
+   4. Bật External Testing (Public Link) trên TestFlight để chia sẻ link cho nhân viên.
 
 🔧 QUYẾT ĐỊNH QUAN TRỌNG:
-   - Customer/Counter search: Local filtering (load all, filter locally)
-   - Money fields: Mặc định 0 khi bỏ trống
-   - Backend validation: tienHang === undefined || null || < 0 (KHÔNG dùng !tienHang)
-   - Vercel: Deploy từ thư mục CHA (gomhangpro-new/), project name = gomhangpro_backend
-
-⚠️ LƯU Ý CHO SESSION SAU:
-   - CreateOrderScreen.js có debug console.log cần xóa
-   - Vercel .vercel/ folder nằm ở gomhangpro-new/ (thư mục cha)
-   - APK build: check `npx eas build:list` để lấy link tải
-   - Performance optimization plan ở plans/260303-1612-performance-optimization/
+   - Bundle Identifier mới: com.gomhangpro.tuanasish
+   - Loại tài khoản Apple: Individual (Cá nhân)
 
 📁 FILES QUAN TRỌNG:
-   - .brain/brain.json (kiến thức project)
-   - .brain/session.json (tiến độ session)
-   - src/screens/worker/CreateOrderScreen.js (file chính sửa)
-   - backend/src/controllers/orders.controller.ts (validation fix)
-   - .env (API URL: gomhangprobackend.vercel.app)
+   - app.json (đã đổi bundleIdentifier & buildNumber=1)
+   - eas.json (cấu hình submit)
+   - .brain/session.json & .brain/handover.md
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 Đã lưu! Để tiếp tục: Gõ /recap
+📍 Đã lưu trạng thái! Khi tài khoản Apple được kích hoạt, bạn chỉ cần gõ: tiếp tục
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

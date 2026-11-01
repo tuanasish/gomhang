@@ -21,7 +21,7 @@ export async function getOrdersList(req: Request, res: Response<ApiResponse<Orde
       .from('orders')
       .select(`
         *,
-        customer:customers!orders_customer_id_fkey(id, name),
+        customer:customers!orders_customer_id_fkey(id, name, address),
         counter:counters!orders_counter_id_fkey(id, name),
         staff:users!orders_staff_id_fkey(id, name)
       `)
@@ -85,6 +85,7 @@ export async function getOrdersList(req: Request, res: Response<ApiResponse<Orde
         shiftId: order.shift_id,
         customerId: order.customer_id,
         customerName: order.customer?.name,
+        customerDefaultTax: parseMoney(order.customer?.address),
         counterId: order.counter_id,
         counterName: order.counter?.name,
         staffId: order.staff_id || undefined, // Convert null to undefined
@@ -121,7 +122,7 @@ export async function getOrderById(req: Request<{ id: string }>, res: Response<A
       .from('orders')
       .select(`
         *,
-        customer:customers!orders_customer_id_fkey(id, name),
+        customer:customers!orders_customer_id_fkey(id, name, address),
         counter:counters!orders_counter_id_fkey(id, name),
         staff:users!orders_staff_id_fkey(id, name)
       `)
@@ -143,6 +144,7 @@ export async function getOrderById(req: Request<{ id: string }>, res: Response<A
         shiftId: order.shift_id,
         customerId: order.customer_id,
         customerName: order.customer?.name,
+        customerDefaultTax: parseMoney(order.customer?.address),
         counterId: order.counter_id,
         counterName: order.counter?.name,
         staffId: order.staff_id || undefined, // Convert null to undefined
@@ -258,16 +260,13 @@ export async function createOrder(
       tienHang: rawTienHang,
       tienCongGom: rawTienCongGom = 0,
       phiDongHang: rawPhiDongHang = 0,
-      tienHoaHong: rawTienHoaHong = 0,
-      tienThem: rawTienThem = 0,
-      loaiTienThem
+      tienHoaHong: rawTienHoaHong = 0
     } = req.body;
 
     const tienHang = parseMoney(rawTienHang);
     const tienCongGom = parseMoney(rawTienCongGom);
     const phiDongHang = parseMoney(rawPhiDongHang);
     const tienHoaHong = parseMoney(rawTienHoaHong);
-    const tienThem = parseMoney(rawTienThem);
     const userId = (req as any).user?.userId;
 
     if (!userId) {
@@ -384,8 +383,21 @@ export async function createOrder(
       finalCounterId = newCounter.id;
     }
 
+    // Đơn nhân viên tạo luôn dùng thuế mặc định của khách hàng.
+    // Nếu không chi tiền hàng thì thuế bắt buộc là 0%, kể cả khi có phí gom.
+    const { data: orderCustomer } = await supabase
+      .from('customers')
+      .select('address')
+      .eq('id', finalCustomerId)
+      .single();
+    const defaultTaxRate = Math.max(0, parseMoney(orderCustomer?.address));
+    const tienThem = tienHang > 0
+      ? Math.round((tienHang + tienCongGom) * defaultTaxRate / 100)
+      : 0;
+    const finalLoaiTienThem = tienThem > 0 ? `Thuế ${defaultTaxRate}%` : null;
+
     // Tính tổng tiền hóa đơn - bao gồm cả tiền hoa hồng và thuế (khách hàng phải trả tổng này)
-    const tongTienHoaDon = tienHang + tienCongGom + phiDongHang + (tienHoaHong || 0) + (tienThem || 0);
+    const tongTienHoaDon = tienHang + tienCongGom + phiDongHang + (tienHoaHong || 0) + tienThem;
 
     // Xoá logic chặn âm quỹ để cho phép nhân viên tiếp tục tạo đơn trả hàng dù quỹ âm
 
@@ -403,7 +415,7 @@ export async function createOrder(
         phi_dong_hang: phiDongHang || 0,
         tien_hoa_hong: tienHoaHong || 0,
         tien_them: tienThem || 0,
-        loai_tien_them: loaiTienThem || null,
+        loai_tien_them: finalLoaiTienThem || null,
         tong_tien_hoa_don: tongTienHoaDon,
         status: 'completed',
       })
@@ -593,7 +605,23 @@ export async function updateOrder(
     const finalTienCongGom = tienCongGom !== undefined ? tienCongGom : parseMoney(existingOrder.tien_cong_gom);
     const finalPhiDongHang = phiDongHang !== undefined ? phiDongHang : parseMoney(existingOrder.phi_dong_hang);
     const finalTienHoaHong = tienHoaHong !== undefined ? tienHoaHong : parseMoney(existingOrder.tien_hoa_hong);
-    const finalTienThem = tienThem !== undefined ? tienThem : parseMoney(existingOrder.tien_them);
+    let finalTienThem = tienThem !== undefined ? tienThem : parseMoney(existingOrder.tien_them);
+
+    if (userRole === 'worker') {
+      const finalCustomerId = updateData.customer_id || existingOrder.customer_id;
+      const { data: orderCustomer } = await supabase
+        .from('customers')
+        .select('address')
+        .eq('id', finalCustomerId)
+        .single();
+      const defaultTaxRate = Math.max(0, parseMoney(orderCustomer?.address));
+
+      finalTienThem = finalTienHang > 0
+        ? Math.round((finalTienHang + finalTienCongGom) * defaultTaxRate / 100)
+        : 0;
+      updateData.tien_them = finalTienThem;
+      updateData.loai_tien_them = finalTienThem > 0 ? `Thuế ${defaultTaxRate}%` : null;
+    }
 
     updateData.tong_tien_hoa_don = finalTienHang + finalTienCongGom + finalPhiDongHang + finalTienHoaHong + finalTienThem;
 

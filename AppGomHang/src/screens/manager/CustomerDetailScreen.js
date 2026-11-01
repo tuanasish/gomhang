@@ -18,8 +18,9 @@ import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { theme } from '../../theme/theme';
 import { formatCurrency, formatDate, getLocalDateString } from '../../utils/helpers';
+import * as SecureStore from 'expo-secure-store';
 
-import { getCustomerByIdAPI, saveCustomerDailyFeeAPI, getCustomerDailyFeeAPI } from '../../api/customers';
+import { getCustomerByIdAPI, saveCustomerDailyFeeAPI, getCustomerDailyFeeAPI, getPreviousCustomerBillAPI } from '../../api/customers';
 import { getOrdersByDateAPI } from '../../api/orders';
 
 export default function CustomerDetailScreen({ route, navigation }) {
@@ -43,6 +44,7 @@ export default function CustomerDetailScreen({ route, navigation }) {
     const [tongThanhToan, setTongThanhToan] = useState('');
     const [savingDongGui, setSavingDongGui] = useState(false);
     const [dongGuiSaved, setDongGuiSaved] = useState(false);
+    const [prevBillData, setPrevBillData] = useState(null);
 
     // Invoiced status for today
     const [isInvoiced, setIsInvoiced] = useState(false);
@@ -89,6 +91,33 @@ export default function CustomerDetailScreen({ route, navigation }) {
                 setDongGuiSaved(false);
                 setIsInvoiced(false);
             }
+
+            // Load nợ & số dư đã lưu trong local storage
+            try {
+                const savedExtrasStr = await SecureStore.getItemAsync(`fee_extras_${customerId}_${dateStr}`);
+                if (savedExtrasStr) {
+                    const saved = JSON.parse(savedExtrasStr);
+                    if (saved.noKhach !== undefined && saved.noKhach !== null) setNoKhach(saved.noKhach.toString());
+                    if (saved.soDuKhach !== undefined && saved.soDuKhach !== null) setSoDuKhach(saved.soDuKhach.toString());
+                } else {
+                    setNoKhach('');
+                    setSoDuKhach('');
+                }
+            } catch (e) {
+                // fallback
+            }
+
+            // Load hóa đơn ngày hôm trước để gợi ý nợ cũ
+            try {
+                const prevRes = await getPreviousCustomerBillAPI(customerId, dateStr);
+                if (prevRes?.success && prevRes.data && prevRes.data.previousTotalAmount > 0) {
+                    setPrevBillData(prevRes.data);
+                } else {
+                    setPrevBillData(null);
+                }
+            } catch (e) {
+                setPrevBillData(null);
+            }
         } catch (error) {
             console.error('Error loading customer detail:', error);
         } finally {
@@ -104,23 +133,31 @@ export default function CustomerDetailScreen({ route, navigation }) {
     };
 
     const handleSaveDongGui = async () => {
-        if (!dongGui || Number(dongGui) <= 0) {
-            Alert.alert('Thông báo', 'Vui lòng nhập phí đóng gửi trước khi lưu');
-            return;
-        }
         setSavingDongGui(true);
         try {
             const dateStr = getLocalDateString(selectedDate);
-            const res = await saveCustomerDailyFeeAPI(customerId, dateStr, Number(dongGui), isInvoiced);
+            const feeVal = Number(dongGui) || 0;
+            const res = await saveCustomerDailyFeeAPI(customerId, dateStr, feeVal, isInvoiced);
+            
+            // Lưu nợ & số dư vào local storage
+            try {
+                await SecureStore.setItemAsync(`fee_extras_${customerId}_${dateStr}`, JSON.stringify({
+                    noKhach: noKhach ? noKhach.toString() : '',
+                    soDuKhach: soDuKhach ? soDuKhach.toString() : ''
+                }));
+            } catch (err) {
+                console.log('SecureStore save error:', err);
+            }
+
             if (res.success) {
                 setDongGuiSaved(true);
-                Alert.alert('Thành công', 'Đã lưu phí đóng gửi');
+                Alert.alert('Thành công', 'Đã lưu thông tin thanh toán (phí đóng gửi & nợ)');
             } else {
                 Alert.alert('Lỗi', res.error || 'Không thể lưu phí đóng gửi');
             }
         } catch (error) {
             console.error('Save dong gui error:', error);
-            Alert.alert('Lỗi', 'Không thể lưu phí đóng gửi. Vui lòng thử lại.');
+            Alert.alert('Lỗi', 'Không thể lưu thông tin thanh toán. Vui lòng thử lại.');
         } finally {
             setSavingDongGui(false);
         }
@@ -436,9 +473,49 @@ export default function CustomerDetailScreen({ route, navigation }) {
                                                         keyboardType="numeric"
                                                         value={noKhach ? noKhach.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''}
                                                         onChangeText={(t) => setNoKhach(t.replace(/[^0-9]/g, ''))}
-                                                        placeholder="0"
+                                                        placeholder={prevBillData?.previousTotalAmount ? formatCurrency(prevBillData.previousTotalAmount) : '0'}
+                                                        placeholderTextColor="#9ca3af"
                                                         style={styles.manualInput}
                                                     />
+                                                    {prevBillData?.previousTotalAmount > 0 && (
+                                                        <TouchableOpacity
+                                                            style={{
+                                                                flexDirection: 'row',
+                                                                alignItems: 'center',
+                                                                backgroundColor: noKhach === prevBillData.previousTotalAmount.toString() ? '#DCFCE7' : '#EFF6FF',
+                                                                borderColor: noKhach === prevBillData.previousTotalAmount.toString() ? '#16A34A' : '#93C5FD',
+                                                                borderWidth: 1,
+                                                                borderRadius: 6,
+                                                                paddingHorizontal: 6,
+                                                                paddingVertical: 4,
+                                                                marginTop: 5,
+                                                                alignSelf: 'flex-start'
+                                                            }}
+                                                            onPress={() => {
+                                                                if (noKhach === prevBillData.previousTotalAmount.toString()) {
+                                                                    setNoKhach('');
+                                                                } else {
+                                                                    setNoKhach(prevBillData.previousTotalAmount.toString());
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Ionicons
+                                                                name={noKhach === prevBillData.previousTotalAmount.toString() ? "checkmark-circle" : "add-circle"}
+                                                                size={13}
+                                                                color={noKhach === prevBillData.previousTotalAmount.toString() ? "#16A34A" : "#2563EB"}
+                                                                style={{ marginRight: 3 }}
+                                                            />
+                                                            <Text style={{
+                                                                fontSize: 10,
+                                                                fontWeight: '600',
+                                                                color: noKhach === prevBillData.previousTotalAmount.toString() ? "#16A34A" : "#2563EB"
+                                                            }}>
+                                                                {noKhach === prevBillData.previousTotalAmount.toString()
+                                                                    ? `✓ Đã điền nợ cũ`
+                                                                    : `+ Lấy nợ hôm trước: ${formatCurrency(prevBillData.previousTotalAmount)}`}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    )}
                                                 </View>
                                                 <View style={[styles.manualField, styles.manualFieldRight]}>
                                                     <Text style={styles.manualLabel}>Tổng cần thanh toán</Text>

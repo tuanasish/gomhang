@@ -60,6 +60,7 @@ const OrderDetailScreen = () => {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const [thueStr, setThueStr] = useState('');
+    const [defaultThueStr, setDefaultThueStr] = useState('0');
     const currentTienHang = Number(editForm.tienHang) || 0;
     const currentTienCongGom = Number(editForm.tienCongGom) || 0;
     const thuePhanTram = thueStr ? parseFloat(thueStr.replace(',', '.')) : 0;
@@ -185,14 +186,16 @@ const OrderDetailScreen = () => {
             loaiTienThem: order.loaiTienThem || '',
         });
 
-        let initialThue = '';
+        let storedThue = '';
         if (order.loaiTienThem && order.loaiTienThem.startsWith('Thuế')) {
             const match = order.loaiTienThem.match(/Thuế ([\d.]+)%/);
             if (match) {
-                initialThue = match[1];
+                storedThue = match[1];
             }
         }
-        setThueStr(initialThue);
+        const customerDefaultTax = String(order.customerDefaultTax ?? storedThue ?? 0);
+        setDefaultThueStr(customerDefaultTax);
+        setThueStr(Number(order.tienHang) > 0 ? customerDefaultTax : '0');
 
         setError(null);
         setIsEditing(true);
@@ -201,6 +204,13 @@ const OrderDetailScreen = () => {
     const handleCancelEditing = () => {
         setIsEditing(false);
         setError(null);
+    };
+
+    const handleTienHangChange = (value) => {
+        const normalizedValue = String(value).replace(/\D/g, '');
+        const amount = Number(normalizedValue) || 0;
+        setEditForm({ ...editForm, tienHang: normalizedValue });
+        setThueStr(amount > 0 ? defaultThueStr : '0');
     };
 
     const handleSaveEditing = async () => {
@@ -440,9 +450,7 @@ const OrderDetailScreen = () => {
                                         <TextInput
                                             keyboardType="numeric"
                                             value={formatNumberInput(editForm.tienHang)}
-                                            onChangeText={(text) =>
-                                                setEditForm((prev) => ({ ...prev, tienHang: text.replace(/\./g, '').replace(/[^0-9]/g, '') }))
-                                            }
+                                            onChangeText={handleTienHangChange}
                                             style={styles.input}
                                         />
                                     </View>
@@ -483,7 +491,7 @@ const OrderDetailScreen = () => {
                                                     placeholderTextColor="#9ca3af"
                                                     keyboardType="decimal-pad"
                                                     value={thueStr}
-                                                    onChangeText={setThueStr}
+                                                    editable={false}
                                                 />
                                                 <Text style={styles.taxPercent}>%</Text>
                                             </View>
@@ -492,7 +500,7 @@ const OrderDetailScreen = () => {
                                                     styles.taxChip,
                                                     thueStr === '1.5' ? styles.taxChipActive : {}
                                                 ]}
-                                                onPress={() => setThueStr(thueStr === '1.5' ? '' : '1.5')}
+                                                disabled
                                             >
                                                 <Text style={[
                                                     styles.taxChipText,

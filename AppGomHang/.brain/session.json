@@ -1,94 +1,71 @@
 {
-    "updated_at": "2026-03-05T16:35:00+07:00",
+    "updated_at": "2026-11-01T18:45:00+07:00",
     "working_on": {
-        "feature": "App Distribution Setup",
-        "task": "TestFlight submission and setup",
-        "status": "done",
+        "feature": "Migrate to New Apple Developer Account",
+        "task": "Waiting for Apple to approve new Developer Account enrollment (~2 business days)",
+        "status": "in_progress",
         "files": [
-            "eas.json"
+            "app.json",
+            "eas.json",
+            "src/screens/worker/CreateOrderScreen.js"
         ],
-        "blockers": [],
-        "notes": "iOS production build submitted to TestFlight. Android build in queue. Guided user on App Store Connect roles and Apple Developer name limitations."
+        "blockers": [
+            "Apple is processing the enrollment for the new Individual Apple Developer account"
+        ],
+        "notes": "Changed bundleIdentifier to com.gomhangpro.tuanasish. Cleaned debug console.logs. Ready to configure new credentials and trigger EAS build once Apple activates account."
     },
     "pending_tasks": [
         {
-            "task": "Test the App via TestFlight",
+            "task": "Tạo App Store Connect API Key (.p8) trên tài khoản mới",
             "priority": "high",
-            "notes": "Wait for Apple to process the IPA (15-30 mins), install via TestFlight invite email."
+            "notes": "Tạo key Admin trên Users and Access -> Integrations, tải file .p8, lấy Key ID & Issuer ID."
         },
         {
-            "task": "Monitor Android Build",
+            "task": "Cấu hình lại EAS credentials cho iOS",
             "priority": "high",
-            "notes": "EAS Android preview build is queued due to free tier concurrency limits. Needs downloading and testing once done."
+            "notes": "Chạy npx eas credentials để liên kết với Apple Team mới và tạo Distribution Certificate mới."
         },
         {
-            "task": "Setup Public Link for TestFlight (Optional)",
+            "task": "Chạy EAS build & Submit lên TestFlight tài khoản mới",
+            "priority": "high",
+            "notes": "npx eas build --platform ios --profile production --auto-submit"
+        },
+        {
+            "task": "Tạo Public Link TestFlight cho nhân viên",
             "priority": "medium",
-            "notes": "Once Beta App Review passes (12-24h), enable External Testing Public Link for easier employee onboarding."
-        },
-        {
-            "task": "Xác nhận lưu đơn hàng thành công trên APK mới",
-            "priority": "medium",
-            "notes": "Test save order với tienHang=0 và các trường tiền bỏ trống trên máy thật Android"
-        },
-        {
-            "task": "Xóa debug console.log trong CreateOrderScreen.js",
-            "priority": "low",
-            "notes": "[DEBUG] Save order payload và error logs"
-        },
-        {
-            "task": "Performance optimization plan",
-            "priority": "medium",
-            "notes": "Splash screen, tab caching - plans đã lên ở plans/260303-1612-performance-optimization/"
+            "notes": "Tạo nhóm External Testing tên Testing, submit Beta App Review để lấy Public Link."
         }
     ],
     "recent_changes": [
         {
-            "timestamp": "2026-03-05",
+            "timestamp": "2026-11-01",
             "type": "config",
-            "description": "Cấu hình eas.json cho iOS preview profile (ad-hoc) và production profile (remote version source)",
+            "description": "Đổi Bundle Identifier sang com.gomhangpro.tuanasish và reset buildNumber=1 trong app.json và eas.json",
             "files": [
+                "app.json",
                 "eas.json"
             ]
         },
         {
-            "timestamp": "2026-03-05",
-            "type": "feature",
-            "description": "Xuất PDF đồng loạt tất cả hóa đơn của 1 khách hàng trong ngày",
+            "timestamp": "2026-11-01",
+            "type": "cleanup",
+            "description": "Xóa debug console.log trong CreateOrderScreen.js",
             "files": [
-                "src/screens/manager/CustomerDetailScreen.js"
-            ]
-        },
-        {
-            "timestamp": "2026-03-04",
-            "type": "feature",
-            "description": "Đẩy project lên GitHub repository tuanasish/AppGomHang",
-            "files": [
-                ".git",
-                ".gitignore"
+                "src/screens/worker/CreateOrderScreen.js"
             ]
         }
     ],
     "errors_encountered": [
         {
-            "error": "Lỗi 'Cannot find module' khi build EAS production iOS ở chế độ non-interactive",
-            "solution": "Chạy EAS build ở chế độ interactive để đăng nhập Apple ID, tạo App Record trên App Store Connect và cấp chứng chỉ Distribution.",
-            "resolved": true
-        },
-        {
-            "error": "TestFlight Internal Testing báo 'No testers matched the search'",
-            "solution": "Tài khoản cần mời phải được thêm vào 'Users and Access' của Apple Developer Program trước mới có thể add vào Internal Testing. Giải pháp khuyên dùng là chuyển sang External Testing (Public Link) chờ duyệt 24h để không phải add rườm rà.",
+            "error": "Tài khoản Apple cũ không có quyền Account Holder nên không đồng ý được điều khoản mới, không submit TestFlight được",
+            "solution": "Đăng ký tài khoản Apple Developer Individual mới và chuyển Bundle ID sang com.gomhangpro.tuanasish.",
             "resolved": true
         }
     ],
     "decisions_made": [
         {
-            "decision": "Giữ nguyên tên Developer là 'Son Mai' trên App Store thay vì đổi thành tên Tiếng Việt Doanh nghiệp",
-            "reason": "Tài khoản Apple Developer là hạng Cá nhân (Individual), Apple bắt buộc hiển thị tên thật theo căn cước. Đổi tên cần đăng ký D-U-N-S và nâng cấp Doanh nghiệp, tốn thời gian không cần thiết cho app nội bộ."
-        },
-        {
-            "decision": "Gợi ý dùng External Testing (Public Link) cho nhân viên tải app iOS",
-            "reason": "Mặc dù phải chờ Apple duyệt Beta App (12-24h), nhưng lợi ích là gửi link tải thẳng không cần add email từng người vào hệ thống rườm rà."
+            "decision": "Đổi Bundle ID sang com.gomhangpro.tuanasish",
+            "reason": "Bundle ID cũ bị kẹt ở tài khoản cũ không transfer được, cần ID mới cho tài khoản Apple mới."
         }
     ]
 }

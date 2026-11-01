@@ -9,9 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "buildNumber": "19",
+      "buildNumber": "1",
       "supportsTablet": true,
-      "bundleIdentifier": "com.gomhangpro.internalapp",
+      "bundleIdentifier": "com.gomhangpro.tuanasish",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

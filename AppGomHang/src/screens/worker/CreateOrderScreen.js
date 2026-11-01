@@ -33,6 +33,7 @@ export default function CreateOrderScreen() {
     const [tienCongGomStr, setTienCongGomStr] = useState('');
     const [tienHoaHongStr, setTienHoaHongStr] = useState('');
     const [thueStr, setThueStr] = useState(''); // Tax percentage
+    const [defaultThueStr, setDefaultThueStr] = useState('0');
 
     const [isSaving, setIsSaving] = useState(false);
     const [currentShiftId, setCurrentShiftId] = useState(null);
@@ -83,11 +84,9 @@ export default function CreateOrderScreen() {
         setCustomerId(c.id);
         setShowCustomerDropdown(false);
         // Tự động điền thuế mặc định và công gom mặc định
-        if (c.address) {
-            setThueStr(c.address.toString());
-        } else {
-            setThueStr('0');
-        }
+        const customerDefaultTax = c.address ? c.address.toString() : '0';
+        setDefaultThueStr(customerDefaultTax);
+        setThueStr(parseMoneyValue(tienHangStr) > 0 ? customerDefaultTax : '0');
         if (c.defaultTienCongGom !== undefined && c.defaultTienCongGom !== null) {
             setTienCongGomStr(formatMoneyInput(c.defaultTienCongGom.toString()));
         } else {
@@ -135,6 +134,12 @@ export default function CreateOrderScreen() {
         const normalized = value.toString().replace(/\./g, '');
         const parsed = Number(normalized);
         return isNaN(parsed) ? 0 : parsed;
+    };
+
+    const handleTienHangChange = (value) => {
+        const formattedValue = formatMoneyInput(value);
+        setTienHangStr(formattedValue);
+        setThueStr(parseMoneyValue(formattedValue) > 0 ? defaultThueStr : '0');
     };
 
     const tienHang = parseMoneyValue(tienHangStr);
@@ -188,12 +193,12 @@ export default function CreateOrderScreen() {
                 tienThem: tienThue > 0 ? tienThue : undefined,
                 loaiTienThem: tienThue > 0 ? `Thuế ${thuePhanTram}%` : undefined,
             };
-            console.log('[DEBUG] Save order payload:', JSON.stringify(payload));
+
             await createOrderAPI(payload);
             Alert.alert('Thành công', 'Đã lưu đơn hàng mới.');
             navigation.goBack();
         } catch (error) {
-            console.log('[DEBUG] Save order error:', error.message, error.response?.status, JSON.stringify(error.response?.data));
+
             showError(error, 'tạo đơn hàng');
         } finally {
             setIsSaving(false);
@@ -413,7 +418,7 @@ export default function CreateOrderScreen() {
                         placeholder="0"
                         keyboardType="numeric"
                         value={tienHangStr}
-                        onChangeText={(t) => setTienHangStr(formatMoneyInput(t))}
+                        onChangeText={handleTienHangChange}
                     />
 
                     <View style={styles.inputGroup}>
@@ -462,7 +467,7 @@ export default function CreateOrderScreen() {
                                     placeholderTextColor="#9ca3af"
                                     keyboardType="decimal-pad"
                                     value={thueStr}
-                                    onChangeText={setThueStr}
+                                    editable={false}
                                 />
                                 <Text style={styles.taxPercent}>%</Text>
                             </View>
@@ -471,7 +476,7 @@ export default function CreateOrderScreen() {
                                     styles.taxChip,
                                     thueStr === '1.5' ? styles.taxChipActive : {}
                                 ]}
-                                onPress={() => setThueStr(thueStr === '1.5' ? '' : '1.5')}
+                                disabled
                             >
                                 <Text style={[
                                     styles.taxChipText,

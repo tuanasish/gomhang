@@ -72,6 +72,14 @@ export const getCustomerDailyFeeAPI = async (customerId, date) => {
 };
 
 /**
+ * Lấy hóa đơn của ngày gần nhất trước ngày chỉ định (tính nợ cũ)
+ */
+export const getPreviousCustomerBillAPI = async (customerId, date) => {
+    const response = await apiClient.get(`/customer-fees/previous-bill/${customerId}`, { params: { date } });
+    return response.data;
+};
+
+/**
  * Lấy tất cả phí đóng gửi theo ngày (cho Dashboard)
  */
 export const getAllCustomerDailyFeesAPI = async (date, startDate, endDate) => {

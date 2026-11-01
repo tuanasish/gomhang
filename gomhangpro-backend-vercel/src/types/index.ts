@@ -5,6 +5,7 @@ export interface Order {
   shiftId: string;
   customerId: string;
   customerName?: string;
+  customerDefaultTax?: number;
   counterId: string;
   counterName?: string;
   staffId?: string; // Optional - có thể NULL nếu nhân viên đã bị xóa

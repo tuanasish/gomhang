@@ -219,3 +219,102 @@ export async function getCustomerDailyFee(req: Request, res: Response): Promise<
         });
     }
 }
+
+/**
+ * Lấy tổng hóa đơn của ngày gần nhất trước ngày được chỉ định (để tính nợ cũ)
+ */
+export async function getPreviousCustomerBill(req: Request, res: Response): Promise<void> {
+    try {
+        const { customerId } = req.params;
+        const { date } = req.query;
+
+        if (!customerId || !date || typeof date !== 'string') {
+            res.status(400).json({
+                success: false,
+                error: 'Tham số customerId và date (YYYY-MM-DD) là bắt buộc',
+            });
+            return;
+        }
+
+        const dateStart = `${date}T00:00:00+07:00`;
+
+        // 1. Tìm đơn hàng gần nhất trước ngày được chọn
+        const { data: latestOrder, error: orderErr } = await supabase
+            .from('orders')
+            .select('created_at')
+            .eq('customer_id', customerId)
+            .neq('status', 'cancelled')
+            .lt('created_at', dateStart)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (orderErr) {
+            console.error('Error finding previous order:', orderErr);
+        }
+
+        if (!latestOrder) {
+            res.json({
+                success: true,
+                data: null,
+                message: 'Không tìm thấy hóa đơn ngày hôm trước',
+            });
+            return;
+        }
+
+        // Chuyển timestamp UTC sang ngày giờ Việt Nam (UTC+7)
+        const d = new Date(latestOrder.created_at);
+        const vnTime = new Date(d.getTime() + 7 * 3600 * 1000);
+        const prevDateStr = vnTime.toISOString().slice(0, 10);
+
+        const prevStart = `${prevDateStr}T00:00:00+07:00`;
+        const prevEnd = `${prevDateStr}T23:59:59+07:00`;
+
+        // 2. Lấy tất cả đơn hàng trong ngày hôm trước đó
+        const { data: prevOrders, error: prevOrdersErr } = await supabase
+            .from('orders')
+            .select('tong_tien_hoa_don')
+            .eq('customer_id', customerId)
+            .neq('status', 'cancelled')
+            .gte('created_at', prevStart)
+            .lte('created_at', prevEnd);
+
+        if (prevOrdersErr) {
+            console.error('Error fetching prev orders:', prevOrdersErr);
+        }
+
+        const totalOrdersAmount = (prevOrders || []).reduce(
+            (sum: number, o: any) => sum + (Number(o.tong_tien_hoa_don) || 0),
+            0
+        );
+
+        // 3. Lấy phí đóng gửi của ngày hôm trước (nếu có)
+        const { data: prevFee } = await supabase
+            .from('customer_daily_fees')
+            .select('phi_dong_gui, is_invoiced')
+            .eq('customer_id', customerId)
+            .eq('date', prevDateStr)
+            .maybeSingle();
+
+        const phiDongGui = Number(prevFee?.phi_dong_gui) || 0;
+        const previousTotalAmount = totalOrdersAmount + phiDongGui;
+
+        res.json({
+            success: true,
+            data: {
+                previousDate: prevDateStr,
+                previousTotalAmount,
+                totalOrdersAmount,
+                phiDongGui,
+                orderCount: prevOrders?.length || 0,
+                isInvoiced: Boolean(prevFee?.is_invoiced),
+            },
+        });
+    } catch (error: any) {
+        console.error('Get previous customer bill error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Lỗi lấy hóa đơn ngày hôm trước',
+        });
+    }
+}
