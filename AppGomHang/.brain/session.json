@@ -1,10 +1,11 @@
 {
-    "updated_at": "2026-11-01T19:07:00+07:00",
+    "updated_at": "2026-11-01T19:16:00+07:00",
     "working_on": {
         "feature": "Customer Debt Auto-fill & Date-Range Ranked Orders List",
         "task": "EAS Android APK build running in cloud",
         "status": "in_progress",
         "files": [
+            "AppGomHang/android/settings.gradle",
             "AppGomHang/src/screens/manager/AdminCustomersScreen.js",
             "AppGomHang/src/screens/manager/CustomerDetailScreen.js",
             "AppGomHang/src/api/customers.js",
@@ -12,13 +13,13 @@
             "gomhangpro-backend-vercel/src/routes/customer-fees.routes.ts"
         ],
         "blockers": [],
-        "notes": "EAS build running: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/185705b9-0434-4c02-8f0e-f3b39e20a3f8"
+        "notes": "EAS build running: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/ec4b4f5c-4ae7-4d87-86c6-58394365b136"
     },
     "pending_tasks": [
         {
             "task": "Tải và cài đặt APK mới để test tính năng nợ cũ và danh sách khách hàng",
             "priority": "high",
-            "notes": "Link tải trên EAS: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/185705b9-0434-4c02-8f0e-f3b39e20a3f8"
+            "notes": "Link tải trên EAS: https://expo.dev/accounts/tuanasish/projects/gomhangpro-app/builds/ec4b4f5c-4ae7-4d87-86c6-58394365b136"
         },
         {
             "task": "Deploy backend lên Vercel",
@@ -32,6 +33,14 @@
         }
     ],
     "recent_changes": [
+        {
+            "timestamp": "2026-11-01",
+            "type": "fix",
+            "description": "Sửa rootProject.name trong settings.gradle về gomhangpro-app (ASCII) để Gradle không bị lỗi variant matching",
+            "files": [
+                "AppGomHang/android/settings.gradle"
+            ]
+        },
         {
             "timestamp": "2026-11-01",
             "type": "feature",
@@ -52,7 +61,13 @@
             ]
         }
     ],
-    "errors_encountered": [],
+    "errors_encountered": [
+        {
+            "error": "Gradle variant matching failed do rootProject.name có dấu Tiếng Việt 'Gom Hàng Ninh Hiệp'",
+            "solution": "Đổi lại rootProject.name = 'gomhangpro-app' (tên hiển thị app_name trong strings.xml vẫn giữ nguyên 'Gom Hàng Ninh Hiệp')",
+            "resolved": true
+        }
+    ],
     "decisions_made": [
         {
             "decision": "Lấy nợ hôm trước từ tổng hóa đơn (đơn + phí đóng gửi) của ngày gần nhất trước đó",
