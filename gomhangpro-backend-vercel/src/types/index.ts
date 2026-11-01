@@ -72,6 +72,7 @@ export interface Shift {
   quyConLai: number; // Quỹ còn lại
   status: 'active' | 'ended';
   tongHoaHong?: number; // Tổng hoa hồng
+  soDonHang?: number; // Số đơn hàng hợp lệ trong ca
   createdAt: Date;
   updatedAt: Date;
 }

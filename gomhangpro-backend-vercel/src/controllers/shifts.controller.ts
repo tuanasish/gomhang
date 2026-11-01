@@ -31,7 +31,7 @@ export async function getShiftsList(req: Request, res: Response<ApiResponse<Shif
         *,
         staff:users!shifts_staff_id_fkey(id, name),
         counter:counters!shifts_counter_id_fkey(id, name),
-        orders:orders(id, status, tien_hoa_hong)
+        orders:orders(id, status, tien_hoa_hong, tien_hang)
       `)
       .order('created_at', { ascending: false });
 
@@ -69,6 +69,10 @@ export async function getShiftsList(req: Request, res: Response<ApiResponse<Shif
         // Lọc orders không bị hủy
         const validOrders = shift.orders ? shift.orders.filter((o: any) => o.status !== 'cancelled') : [];
         const tongHoaHong = validOrders.reduce((sum: number, o: any) => sum + parseFloat(o.tien_hoa_hong || 0), 0);
+        // Tự động tính tổng tiền hàng đã trả từ các đơn hàng thực tế của ca để luôn khớp tuyệt đối với Tổng quan
+        const tongTienHangDaTra = validOrders.reduce((sum: number, o: any) => sum + parseFloat(o.tien_hang || 0), 0);
+        const tienGiaoCa = parseFloat(shift.tien_giao_ca || 0);
+        const quyConLai = tienGiaoCa - tongTienHangDaTra;
 
         return {
           id: shift.id,
@@ -79,9 +83,9 @@ export async function getShiftsList(req: Request, res: Response<ApiResponse<Shif
           date: shift.date,
           startTime: new Date(shift.start_time),
           endTime: shift.end_time ? new Date(shift.end_time) : undefined,
-          tienGiaoCa: parseFloat(shift.tien_giao_ca),
-          tongTienHangDaTra: parseFloat(shift.tong_tien_hang_da_tra || 0),
-          quyConLai: parseFloat(shift.quy_con_lai || 0),
+          tienGiaoCa,
+          tongTienHangDaTra,
+          quyConLai,
           status: shift.status,
           soDonHang: validOrders.length,
           tongHoaHong,
@@ -112,7 +116,7 @@ export async function getShiftById(req: Request<{ id: string }>, res: Response<A
         *,
         staff:users!shifts_staff_id_fkey(id, name),
         counter:counters!shifts_counter_id_fkey(id, name),
-        orders:orders(id, status, tien_hoa_hong)
+        orders:orders(id, status, tien_hoa_hong, tien_hang)
       `)
       .eq('id', id)
       .single();
@@ -127,6 +131,9 @@ export async function getShiftById(req: Request<{ id: string }>, res: Response<A
 
     const validOrders = shift.orders ? shift.orders.filter((o: any) => o.status !== 'cancelled') : [];
     const tongHoaHong = validOrders.reduce((sum: number, o: any) => sum + parseFloat(o.tien_hoa_hong || 0), 0);
+    const tongTienHangDaTra = validOrders.reduce((sum: number, o: any) => sum + parseFloat(o.tien_hang || 0), 0);
+    const tienGiaoCa = parseFloat(shift.tien_giao_ca || 0);
+    const quyConLai = tienGiaoCa - tongTienHangDaTra;
 
     res.json({
       success: true,
@@ -139,10 +146,11 @@ export async function getShiftById(req: Request<{ id: string }>, res: Response<A
         date: shift.date,
         startTime: new Date(shift.start_time),
         endTime: shift.end_time ? new Date(shift.end_time) : undefined,
-        tienGiaoCa: parseFloat(shift.tien_giao_ca),
-        tongTienHangDaTra: parseFloat(shift.tong_tien_hang_da_tra || 0),
-        quyConLai: parseFloat(shift.quy_con_lai || 0),
+        tienGiaoCa,
+        tongTienHangDaTra,
+        quyConLai,
         status: shift.status,
+        soDonHang: validOrders.length,
         tongHoaHong,
         createdAt: new Date(shift.created_at),
         updatedAt: new Date(shift.updated_at),
@@ -277,7 +285,8 @@ export async function getCurrentShift(req: Request, res: Response<ApiResponse<Sh
       .select(`
         *,
         staff:users!shifts_staff_id_fkey(id, name),
-        counter:counters!shifts_counter_id_fkey(id, name)
+        counter:counters!shifts_counter_id_fkey(id, name),
+        orders:orders(id, status, tien_hoa_hong, tien_hang)
       `)
       .eq('staff_id', userId)
       .eq('date', today)
@@ -292,6 +301,12 @@ export async function getCurrentShift(req: Request, res: Response<ApiResponse<Sh
       return;
     }
 
+    const validOrders = shift.orders ? shift.orders.filter((o: any) => o.status !== 'cancelled') : [];
+    const tongHoaHong = validOrders.reduce((sum: number, o: any) => sum + parseFloat(o.tien_hoa_hong || 0), 0);
+    const tongTienHangDaTra = validOrders.reduce((sum: number, o: any) => sum + parseFloat(o.tien_hang || 0), 0);
+    const tienGiaoCa = parseFloat(shift.tien_giao_ca || 0);
+    const quyConLai = tienGiaoCa - tongTienHangDaTra;
+
     res.json({
       success: true,
       data: {
@@ -303,10 +318,12 @@ export async function getCurrentShift(req: Request, res: Response<ApiResponse<Sh
         date: shift.date,
         startTime: new Date(shift.start_time),
         endTime: shift.end_time ? new Date(shift.end_time) : undefined,
-        tienGiaoCa: parseFloat(shift.tien_giao_ca),
-        tongTienHangDaTra: parseFloat(shift.tong_tien_hang_da_tra || 0),
-        quyConLai: parseFloat(shift.quy_con_lai || 0),
+        tienGiaoCa,
+        tongTienHangDaTra,
+        quyConLai,
         status: shift.status,
+        soDonHang: validOrders.length,
+        tongHoaHong,
         createdAt: new Date(shift.created_at),
         updatedAt: new Date(shift.updated_at),
       },
@@ -649,12 +666,24 @@ export async function endShift(
       return;
     }
 
+    // Tính lại tong_tien_hang_da_tra và quy_con_lai chính xác theo các đơn hàng hiện có
+    const { data: shiftOrders } = await supabase
+      .from('orders')
+      .select('tien_hang')
+      .eq('shift_id', id)
+      .neq('status', 'cancelled');
+    const tongTienHangDaTra = (shiftOrders || []).reduce((sum: number, o: any) => sum + parseFloat(o.tien_hang || 0), 0);
+    const tienGiaoCa = parseFloat(shift.tien_giao_ca || 0);
+    const quyConLai = tienGiaoCa - tongTienHangDaTra;
+
     // Update shift - kết thúc ca
     const { data: updatedShift, error } = await supabase
       .from('shifts')
       .update({
         end_time: new Date().toISOString(),
         status: 'ended',
+        tong_tien_hang_da_tra: tongTienHangDaTra,
+        quy_con_lai: quyConLai,
       })
       .eq('id', id)
       .select(`
@@ -733,7 +762,14 @@ async function recalculateShiftMoney(shiftId: string): Promise<void> {
   // Tính tiền giao ca mới = tiền ban đầu + tổng đã thêm
   const tienGiaoCaBanDau = parseFloat(shift.tien_giao_ca_ban_dau || '0');
   const tienGiaoCaMoi = tienGiaoCaBanDau + tongTienDaThem;
-  const tongTienHangDaTra = parseFloat(shift.tong_tien_hang_da_tra || '0');
+
+  // Lấy tổng tiền hàng thực tế của ca từ các đơn hàng hợp lệ
+  const { data: shiftOrders } = await supabase
+    .from('orders')
+    .select('tien_hang')
+    .eq('shift_id', shiftId)
+    .neq('status', 'cancelled');
+  const tongTienHangDaTra = (shiftOrders || []).reduce((sum: number, o: any) => sum + parseFloat(o.tien_hang || 0), 0);
   const quyConLai = tienGiaoCaMoi - tongTienHangDaTra;
 
   // Cập nhật ca
@@ -741,6 +777,7 @@ async function recalculateShiftMoney(shiftId: string): Promise<void> {
     .from('shifts')
     .update({
       tien_giao_ca: tienGiaoCaMoi.toString(),
+      tong_tien_hang_da_tra: tongTienHangDaTra,
       quy_con_lai: quyConLai.toString(),
       updated_at: new Date().toISOString(),
     })
@@ -898,8 +935,13 @@ export async function updateShiftMoney(req: Request, res: Response<ApiResponse<S
       return;
     }
 
-    // Tính toán lại quỹ còn lại
-    const tongTienHangDaTra = parseFloat(shift.tong_tien_hang_da_tra || 0);
+    // Tính toán lại quỹ còn lại dựa trên các đơn hàng thực tế
+    const { data: shiftOrders } = await supabase
+      .from('orders')
+      .select('tien_hang')
+      .eq('shift_id', id)
+      .neq('status', 'cancelled');
+    const tongTienHangDaTra = (shiftOrders || []).reduce((sum: number, o: any) => sum + parseFloat(o.tien_hang || 0), 0);
     const quyConLai = tienGiaoCa - tongTienHangDaTra;
 
     // Cập nhật ca
@@ -907,6 +949,7 @@ export async function updateShiftMoney(req: Request, res: Response<ApiResponse<S
       .from('shifts')
       .update({
         tien_giao_ca: tienGiaoCa.toString(),
+        tong_tien_hang_da_tra: tongTienHangDaTra,
         quy_con_lai: quyConLai.toString(),
         updated_at: new Date().toISOString(),
       })
