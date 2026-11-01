@@ -30,16 +30,7 @@
   },
   "submit": {
     "production": {
-      "ios": {
-        "ascApiKeyPath": "../AuthKey_K8V7UPC335.p8",
-        "ascApiKeyIssuerId": "6a725f74-1d2b-4452-b564-24f42f0ac1af",
-        "ascApiKeyId": "K8V7UPC335"
-      }
-    },
-    "automated": {
-      "ios": {
-        "bundleIdentifier": "com.gomhangpro.tuanasish"
-      }
+      "ios": {}
     }
   }
 }
