@@ -25,6 +25,9 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://gomhangprobackend.vercel.app/api"
+      },
+      "android": {
+        "buildType": "apk"
       }
     }
   },
