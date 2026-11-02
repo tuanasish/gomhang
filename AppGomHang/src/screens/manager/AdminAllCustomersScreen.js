@@ -187,12 +187,18 @@ export default function AdminAllCustomersScreen({ navigation }) {
                     orderCount: 0,
                     totalAmount: 0,
                     totalTienUng: 0,
+                    totalPhiGom: 0,
+                    totalHoaHong: 0,
+                    totalThue: 0,
                     orders: []
                 };
             }
             map[cId].orderCount += 1;
             map[cId].totalAmount += (Number(order.tongTienHoaDon) || 0);
             map[cId].totalTienUng += (Number(order.tienHang) || 0);
+            map[cId].totalPhiGom += (Number(order.tienCongGom) || 0);
+            map[cId].totalHoaHong += (Number(order.tienHoaHong) || 0);
+            map[cId].totalThue += (Number(order.tienThem) || 0);
             map[cId].orders.push(order);
         });
         return map;
@@ -209,6 +215,9 @@ export default function AdminAllCustomersScreen({ navigation }) {
                 orderCount: 0,
                 totalAmount: 0,
                 totalTienUng: 0,
+                totalPhiGom: 0,
+                totalHoaHong: 0,
+                totalThue: 0,
                 orders: []
             };
             return {
@@ -216,6 +225,9 @@ export default function AdminAllCustomersScreen({ navigation }) {
                 orderCount: stats.orderCount,
                 totalAmount: stats.totalAmount,
                 totalTienUng: stats.totalTienUng,
+                totalPhiGom: stats.totalPhiGom,
+                totalHoaHong: stats.totalHoaHong,
+                totalThue: stats.totalThue,
                 orders: stats.orders
             };
         });
@@ -448,12 +460,33 @@ export default function AdminAllCustomersScreen({ navigation }) {
                     <View style={styles.customerInfo}>
                         <Text style={styles.customerName}>{item.name}</Text>
 
-                        {/* 3 dòng theo đúng yêu cầu */}
+                        {/* Chi tiết theo đúng yêu cầu */}
                         <View style={styles.threeLinesContainer}>
                             <Text style={styles.infoLine}>
                                 <Text style={styles.infoLineLabel}>Tổng số đơn : </Text>
                                 <Text style={[styles.infoLineValue, hasOrders ? styles.infoLineOrderActive : null]}>
                                     {item.orderCount} đơn{hasOrders ? ` (${formatCurrency(item.totalAmount)})` : ''}
+                                </Text>
+                            </Text>
+
+                            <Text style={styles.infoLine}>
+                                <Text style={styles.infoLineLabel}>Phí gom : </Text>
+                                <Text style={styles.infoLineValue}>
+                                    {formatCurrency(item.totalPhiGom || 0)}
+                                </Text>
+                            </Text>
+
+                            <Text style={styles.infoLine}>
+                                <Text style={styles.infoLineLabel}>Hoa hồng : </Text>
+                                <Text style={styles.infoLineValue}>
+                                    {formatCurrency(item.totalHoaHong || 0)}
+                                </Text>
+                            </Text>
+
+                            <Text style={styles.infoLine}>
+                                <Text style={styles.infoLineLabel}>Thuế : </Text>
+                                <Text style={styles.infoLineValue}>
+                                    {formatCurrency(item.totalThue || 0)}
                                 </Text>
                             </Text>
 
