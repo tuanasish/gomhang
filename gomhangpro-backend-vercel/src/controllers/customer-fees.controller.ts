@@ -6,7 +6,7 @@ import { supabase } from '../config/supabase.js';
  */
 export async function saveCustomerDailyFee(req: Request, res: Response): Promise<void> {
     try {
-        const { customerId, date, phiDongGui, isInvoiced } = req.body;
+        const { customerId, date, phiDongGui, isInvoiced, noKhach, soDuKhach, tongThanhToan } = req.body;
 
         if (!customerId || !date) {
             res.status(400).json({
@@ -29,6 +29,15 @@ export async function saveCustomerDailyFee(req: Request, res: Response): Promise
         }
         if (isInvoiced !== undefined) {
             updatePayload.is_invoiced = isInvoiced;
+        }
+        if (noKhach !== undefined) {
+            updatePayload.no_khach = Number(noKhach) || 0;
+        }
+        if (soDuKhach !== undefined) {
+            updatePayload.so_du_khach = Number(soDuKhach) || 0;
+        }
+        if (tongThanhToan !== undefined) {
+            updatePayload.tong_thanh_toan = Number(tongThanhToan) || 0;
         }
 
         const { data, error } = await supabase
@@ -57,6 +66,9 @@ export async function saveCustomerDailyFee(req: Request, res: Response): Promise
                 date: data.date,
                 phiDongGui: Number(data.phi_dong_gui),
                 isInvoiced: Boolean(data.is_invoiced),
+                noKhach: Number(data.no_khach) || 0,
+                soDuKhach: Number(data.so_du_khach) || 0,
+                tongThanhToan: Number(data.tong_thanh_toan) || 0,
                 createdBy: data.created_by,
             },
             message: 'Đã lưu phí đóng gửi',
@@ -156,6 +168,9 @@ export async function getCustomerDailyFees(req: Request, res: Response): Promise
                 date: item.date,
                 phiDongGui: Number(item.phi_dong_gui),
                 isInvoiced: Boolean(item.is_invoiced),
+                noKhach: Number(item.no_khach) || 0,
+                soDuKhach: Number(item.so_du_khach) || 0,
+                tongThanhToan: Number(item.tong_thanh_toan) || 0,
                 createdBy: item.created_by,
             })),
         });
@@ -208,6 +223,9 @@ export async function getCustomerDailyFee(req: Request, res: Response): Promise<
                 date: data.date,
                 phiDongGui: Number(data.phi_dong_gui),
                 isInvoiced: Boolean(data.is_invoiced),
+                noKhach: Number(data.no_khach) || 0,
+                soDuKhach: Number(data.so_du_khach) || 0,
+                tongThanhToan: Number(data.tong_thanh_toan) || 0,
                 createdBy: data.created_by,
             } : null,
         });
@@ -253,7 +271,34 @@ export async function getPreviousCustomerBill(req: Request, res: Response): Prom
             console.error('Error finding previous order:', orderErr);
         }
 
-        if (!latestOrder) {
+        // Tìm bản ghi customer_daily_fees gần nhất trước ngày được chọn
+        const { data: latestFee, error: feeErr } = await supabase
+            .from('customer_daily_fees')
+            .select('date')
+            .eq('customer_id', customerId)
+            .lt('date', date)
+            .order('date', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (feeErr) {
+            console.error('Error finding previous fee:', feeErr);
+        }
+
+        let prevDateStr: string | null = null;
+        if (latestOrder) {
+            const d = new Date(latestOrder.created_at);
+            const vnTime = new Date(d.getTime() + 7 * 3600 * 1000);
+            prevDateStr = vnTime.toISOString().slice(0, 10);
+        }
+
+        if (latestFee?.date) {
+            if (!prevDateStr || latestFee.date > prevDateStr) {
+                prevDateStr = latestFee.date;
+            }
+        }
+
+        if (!prevDateStr) {
             res.json({
                 success: true,
                 data: null,
@@ -261,11 +306,6 @@ export async function getPreviousCustomerBill(req: Request, res: Response): Prom
             });
             return;
         }
-
-        // Chuyển timestamp UTC sang ngày giờ Việt Nam (UTC+7)
-        const d = new Date(latestOrder.created_at);
-        const vnTime = new Date(d.getTime() + 7 * 3600 * 1000);
-        const prevDateStr = vnTime.toISOString().slice(0, 10);
 
         const prevStart = `${prevDateStr}T00:00:00+07:00`;
         const prevEnd = `${prevDateStr}T23:59:59+07:00`;
@@ -288,16 +328,28 @@ export async function getPreviousCustomerBill(req: Request, res: Response): Prom
             0
         );
 
-        // 3. Lấy phí đóng gửi của ngày hôm trước (nếu có)
+        // 3. Lấy phí đóng gửi & nợ của ngày hôm trước (nếu có)
         const { data: prevFee } = await supabase
             .from('customer_daily_fees')
-            .select('phi_dong_gui, is_invoiced')
+            .select('phi_dong_gui, is_invoiced, no_khach, so_du_khach, tong_thanh_toan')
             .eq('customer_id', customerId)
             .eq('date', prevDateStr)
             .maybeSingle();
 
         const phiDongGui = Number(prevFee?.phi_dong_gui) || 0;
-        const previousTotalAmount = totalOrdersAmount + phiDongGui;
+        const prevNoKhach = Number(prevFee?.no_khach) || 0;
+        const prevSoDuKhach = Number(prevFee?.so_du_khach) || 0;
+        const prevTongThanhToan = Number(prevFee?.tong_thanh_toan) || 0;
+
+        // "Khách cần thanh toán hôm trước":
+        // Nếu đã lưu tong_thanh_toan > 0 thì dùng chính xác số tiền đó
+        // Nếu chưa lưu tong_thanh_toan thì tính: tổng tiền đơn + phí đóng gửi + nợ cũ - số dư
+        let previousTotalAmount = 0;
+        if (prevTongThanhToan > 0) {
+            previousTotalAmount = prevTongThanhToan;
+        } else {
+            previousTotalAmount = Math.max(0, totalOrdersAmount + phiDongGui + prevNoKhach - prevSoDuKhach);
+        }
 
         res.json({
             success: true,
@@ -306,6 +358,9 @@ export async function getPreviousCustomerBill(req: Request, res: Response): Prom
                 previousTotalAmount,
                 totalOrdersAmount,
                 phiDongGui,
+                noKhach: prevNoKhach,
+                soDuKhach: prevSoDuKhach,
+                tongThanhToan: previousTotalAmount,
                 orderCount: prevOrders?.length || 0,
                 isInvoiced: Boolean(prevFee?.is_invoiced),
             },

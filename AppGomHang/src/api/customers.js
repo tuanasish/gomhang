@@ -52,12 +52,15 @@ export const searchCustomersAPI = async (query) => {
 };
 
 /**
- * Lưu/cập nhật phí đóng gửi cho khách hàng theo ngày
+ * Lưu/cập nhật phí đóng gửi & nợ cho khách hàng theo ngày
  */
-export const saveCustomerDailyFeeAPI = async (customerId, date, phiDongGui, isInvoiced) => {
+export const saveCustomerDailyFeeAPI = async (customerId, date, phiDongGui, isInvoiced, noKhach, soDuKhach, tongThanhToan) => {
     const payload = { customerId, date };
     if (phiDongGui !== undefined) payload.phiDongGui = phiDongGui;
     if (isInvoiced !== undefined) payload.isInvoiced = isInvoiced;
+    if (noKhach !== undefined) payload.noKhach = noKhach;
+    if (soDuKhach !== undefined) payload.soDuKhach = soDuKhach;
+    if (tongThanhToan !== undefined) payload.tongThanhToan = tongThanhToan;
 
     const response = await apiClient.post('/customer-fees', payload);
     return response.data;

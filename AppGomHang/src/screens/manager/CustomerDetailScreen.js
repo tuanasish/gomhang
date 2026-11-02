@@ -73,13 +73,23 @@ export default function CustomerDetailScreen({ route, navigation }) {
                 setOrders(customerOrders);
             }
 
-            // Load phí đóng gửi đã lưu
+            // Load phí đóng gửi & nợ đã lưu
+            let loadedNoKhach = null;
+            let loadedSoDuKhach = null;
             try {
                 const feeRes = await getCustomerDailyFeeAPI(customerId, dateStr);
                 if (feeRes.success && feeRes.data) {
                     setDongGui(feeRes.data.phiDongGui > 0 ? feeRes.data.phiDongGui.toString() : '');
                     setDongGuiSaved(true);
                     setIsInvoiced(feeRes.data.isInvoiced || false);
+                    if (feeRes.data.noKhach !== undefined && feeRes.data.noKhach > 0) {
+                        loadedNoKhach = feeRes.data.noKhach.toString();
+                        setNoKhach(loadedNoKhach);
+                    }
+                    if (feeRes.data.soDuKhach !== undefined && feeRes.data.soDuKhach > 0) {
+                        loadedSoDuKhach = feeRes.data.soDuKhach.toString();
+                        setSoDuKhach(loadedSoDuKhach);
+                    }
                 } else {
                     setDongGui('');
                     setDongGuiSaved(false);
@@ -92,19 +102,26 @@ export default function CustomerDetailScreen({ route, navigation }) {
                 setIsInvoiced(false);
             }
 
-            // Load nợ & số dư đã lưu trong local storage
-            try {
-                const savedExtrasStr = await SecureStore.getItemAsync(`fee_extras_${customerId}_${dateStr}`);
-                if (savedExtrasStr) {
-                    const saved = JSON.parse(savedExtrasStr);
-                    if (saved.noKhach !== undefined && saved.noKhach !== null) setNoKhach(saved.noKhach.toString());
-                    if (saved.soDuKhach !== undefined && saved.soDuKhach !== null) setSoDuKhach(saved.soDuKhach.toString());
-                } else {
-                    setNoKhach('');
-                    setSoDuKhach('');
+            // Load nợ & số dư đã lưu trong local storage (nếu server chưa có)
+            if (loadedNoKhach === null || loadedSoDuKhach === null) {
+                try {
+                    const savedExtrasStr = await SecureStore.getItemAsync(`fee_extras_${customerId}_${dateStr}`);
+                    if (savedExtrasStr) {
+                        const saved = JSON.parse(savedExtrasStr);
+                        if (loadedNoKhach === null) {
+                            setNoKhach(saved.noKhach ? saved.noKhach.toString() : '');
+                        }
+                        if (loadedSoDuKhach === null) {
+                            setSoDuKhach(saved.soDuKhach ? saved.soDuKhach.toString() : '');
+                        }
+                    } else {
+                        if (loadedNoKhach === null) setNoKhach('');
+                        if (loadedSoDuKhach === null) setSoDuKhach('');
+                    }
+                } catch (e) {
+                    if (loadedNoKhach === null) setNoKhach('');
+                    if (loadedSoDuKhach === null) setSoDuKhach('');
                 }
-            } catch (e) {
-                // fallback
             }
 
             // Load hóa đơn ngày hôm trước để gợi ý nợ cũ
@@ -137,7 +154,10 @@ export default function CustomerDetailScreen({ route, navigation }) {
         try {
             const dateStr = getLocalDateString(selectedDate);
             const feeVal = Number(dongGui) || 0;
-            const res = await saveCustomerDailyFeeAPI(customerId, dateStr, feeVal, isInvoiced);
+            const nKhach = Number(noKhach) || 0;
+            const sdKhach = Number(soDuKhach) || 0;
+            const tThanhToan = Number(tongThanhToan) || 0;
+            const res = await saveCustomerDailyFeeAPI(customerId, dateStr, feeVal, isInvoiced, nKhach, sdKhach, tThanhToan);
             
             // Lưu nợ & số dư vào local storage
             try {
@@ -224,9 +244,13 @@ export default function CustomerDetailScreen({ route, navigation }) {
                             link.click();
                             document.body.removeChild(link);
 
-                            // Mark as invoiced
+                            // Mark as invoiced & save amounts
                             const dateStr = getLocalDateString(selectedDate);
-                            await saveCustomerDailyFeeAPI(customerId, dateStr, Number(dongGui) || 0, true);
+                            const feeVal = Number(dongGui) || 0;
+                            const nKhach = Number(noKhach) || 0;
+                            const sdKhach = Number(soDuKhach) || 0;
+                            const tThanhToan = Number(tongThanhToan) || 0;
+                            await saveCustomerDailyFeeAPI(customerId, dateStr, feeVal, true, nKhach, sdKhach, tThanhToan);
                             setIsInvoiced(true);
                         } catch (webErr) {
                             console.error('Web export error:', webErr);
@@ -238,23 +262,32 @@ export default function CustomerDetailScreen({ route, navigation }) {
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
+
+                            const dateStr = getLocalDateString(selectedDate);
+                            const feeVal = Number(dongGui) || 0;
+                            const nKhach = Number(noKhach) || 0;
+                            const sdKhach = Number(soDuKhach) || 0;
+                            const tThanhToan = Number(tongThanhToan) || 0;
+                            await saveCustomerDailyFeeAPI(customerId, dateStr, feeVal, true, nKhach, sdKhach, tThanhToan);
+                            setIsInvoiced(true);
                         }
                     } else {
                         const uri = await invoiceRef.current.capture();
+                        const dateStr = getLocalDateString(selectedDate);
+                        const feeVal = Number(dongGui) || 0;
+                        const nKhach = Number(noKhach) || 0;
+                        const sdKhach = Number(soDuKhach) || 0;
+                        const tThanhToan = Number(tongThanhToan) || 0;
+                        await saveCustomerDailyFeeAPI(customerId, dateStr, feeVal, true, nKhach, sdKhach, tThanhToan);
+                        setIsInvoiced(true);
+
                         if (await Sharing.isAvailableAsync()) {
                             await Sharing.shareAsync(uri, {
                                 mimeType: 'image/jpeg',
                                 dialogTitle: 'Chia sẻ ảnh hóa đơn',
                             });
-                            // Mark as invoiced
-                            const dateStr = getLocalDateString(selectedDate);
-                            await saveCustomerDailyFeeAPI(customerId, dateStr, Number(dongGui) || 0, true);
-                            setIsInvoiced(true);
                         } else {
                             Alert.alert('Thành công', 'Đã lưu ảnh hóa đơn.');
-                            const dateStr = getLocalDateString(selectedDate);
-                            await saveCustomerDailyFeeAPI(customerId, dateStr, Number(dongGui) || 0, true);
-                            setIsInvoiced(true);
                         }
                     }
                 } catch (err) {
